@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>半潜揽货工作台原型</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    :root{
+      --bg:#eef5fd;
+      --panel:#ffffff;
+      --line:#e6edf5;
+      --line-strong:#d6e1ef;
+      --primary:#4a90e2;
+      --primary-deep:#2f6db5;
+      --primary-soft:#eaf3ff;
+      --text:#223548;
+      --text-2:#5f7387;
+      --text-3:#8fa2b6;
+      --tab:#f5f8fc;
+      --danger:#ea5858;
+      --warning:#f1a52c;
+      --success:#5cab6e;
+      --shadow:0 8px 24px rgba(28, 61, 103, .06);
+      --radius:14px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      font-size:14px;
+      min-width:1280px;
+    }
+    .topnav{
+      height:60px;
+      background:#d9ebff;
+      border-bottom:1px solid #c7ddf5;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 24px;
+      position:sticky;
+      top:0;
+      z-index:20;
+    }
+    .nav-left,.nav-right{display:flex;align-items:center;gap:16px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .menu-btn{font-size:22px;color:var(--primary-deep);cursor:pointer}
+    .logo-mark{
+      width:48px;height:48px;border-radius:12px;
+      background:linear-gradient(145deg,#ffffff,#e8f2ff);
+      border:1px solid #cfe0f2;
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
+      color:#215a9b;font-weight:800;line-height:1.05;font-size:11px;text-align:center;
+    }
+    .nav-tabs{display:flex;align-items:flex-end;gap:8px;margin-left:8px}
+    .nav-tab{
+      padding:12px 18px;
+      border-radius:12px 12px 0 0;
+      color:#4c6580;
+      cursor:pointer;
+    }
+    .nav-tab.active{
+      background:#f5f9ff;
+      color:var(--primary-deep);
+      font-weight:700;
+      box-shadow:0 -1px 0 #bcd2ea inset, 0 0 0 1px #cfe0f2;
+    }
+    .scope-select,.search-box,.icon-btn,.user-chip{
+      height:38px;
+      border:1px solid #cfe0f2;
+      background:rgba(255,255,255,.75);
+      border-radius:10px;
+      display:flex;align-items:center;
+    }
+    .scope-select{padding:0 12px;color:#47627d;gap:6px}
+    .search-box{padding:0 12px;gap:8px;width:260px;color:#245f9b}
+    .search-box input{border:none;outline:none;background:none;flex:1;font-size:13px;color:var(--text)}
+    .search-box svg{width:16px;height:16px;flex:0 0 auto;stroke:#245f9b}
+    .icon-btn{width:36px;height:38px;justify-content:center;color:#245f9b;position:relative;border:none;background:transparent;border-radius:6px}
+    .icon-btn:hover{background:rgba(255,255,255,.45)}
+    .icon-btn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .user-chip{padding:0 10px 0 8px;gap:8px;color:#40607f}
+    .avatar{width:26px;height:26px;border-radius:50%;background:#7da9df;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+
+    .page{
+      max-width:1600px;
+      margin:0 auto;
+      padding:26px 22px 34px;
+    }
+    .page-title{font-size:22px;font-weight:700;color:#1f3550;margin:0 0 18px 4px}
+
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      margin-bottom:18px;
+      overflow:hidden;
+    }
+    .panel-head{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:18px 22px 10px;
+    }
+    .panel-title{font-size:18px;font-weight:700;color:#24384d}
+    .panel-subtitle{font-size:12px;color:var(--text-3);margin-left:8px;font-weight:400}
+    .fold-btn{
+      background:none;border:none;color:#587595;font-size:18px;cursor:pointer;
+      width:28px;height:28px;border-radius:8px;
+    }
+    .fold-btn:hover{background:#f1f6fd}
+    .panel-body{padding:0 22px 22px}
+
+    /* 我要办理 */
+    .quick-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr 1.25fr;
+      gap:16px;
+      padding-top:6px;
+    }
+    .quick-card{
+      border:1px solid var(--line);
+      background:linear-gradient(180deg,#ffffff 0%, #fbfdff 100%);
+      border-radius:16px;
+      padding:18px;
+      min-height:228px;
+      display:flex;flex-direction:column;
+    }
+    .quick-card-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
+    .quick-card-head h3{font-size:24px;color:#254668;line-height:1}
+    .quick-card-head span{font-size:12px;color:var(--text-3)}
+    .menu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .menu-grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .menu-item{
+      border:1px solid #d9e5f1;
+      background:#f8fbff;
+      color:#32587c;
+      border-radius:8px;
+      min-height:44px;
+      display:flex;align-items:center;justify-content:center;
+      text-align:center;
+      padding:6px 9px;
+      font-size:13px;
+      font-weight:600;
+      cursor:pointer;
+      transition:.16s ease;
+      user-select:none;
+    }
+    .menu-item:hover{transform:translateY(-1px);background:#eef6ff;border-color:#b8d1f0;box-shadow:0 6px 16px rgba(71,121,185,.12)}
+    .menu-item.emphasis{background:#fdf7de;border-color:#e6d8a2;color:#38557d}
+    .menu-item.wide{grid-column:1/-1}
+    .quick-foot{
+      margin-top:auto;
+      padding-top:16px;
+      border-top:1px dashed #e7eef7;
+      display:flex;justify-content:space-between;align-items:center;
+      color:var(--text-3);font-size:12px;
+    }
+    .quick-link{color:#4a90e2;font-weight:600;cursor:pointer}
+    .quick-card:nth-child(1) .menu-item:nth-child(3),
+    .quick-card:nth-child(2) .menu-item:nth-child(3){grid-column:1/-1}
+
+    /* 中部个性化区域 */
+    .primary-tabs{
+      display:flex;align-items:flex-end;gap:10px;
+      border-bottom:1px solid var(--line);
+      padding:0 22px;
+    }
+    .primary-tab{
+      position:relative;
+      border:none;background:none;cursor:pointer;
+      color:#1f3550;font-size:16px;font-weight:700;
+      padding:15px 2px 14px;
+      margin-right:18px;
+    }
+    .primary-tab.active{color:#3d84e3}
+    .primary-tab.active::after{
+      content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:3px;background:#3d84e3;
+    }
+    .primary-pane{display:none;padding:18px 22px 22px}
+    .primary-pane.active{display:block}
+
+    .subtabs{
+      display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+    .subtab{
+      border:none;background:#f4f8fd;color:#587595;border-radius:10px;cursor:pointer;
+      padding:8px 14px;font-weight:700;
+      display:flex;align-items:center;gap:8px;
+    }
+    .subtab.active{background:#eff5ff;color:#24589a}
+    .subtab .count{background:#dceafe;color:#24589a;padding:2px 8px;border-radius:999px;font-size:12px}
+    .chips{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+    .chip{
+      height:32px;border:1px solid #d7e3ef;background:#fff;color:#587595;
+      border-radius:999px;padding:0 14px;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;
+    }
+    .chip.active{border-color:#99bdee;background:#eff5ff;color:#24589a;font-weight:700}
+    .chip b{font-weight:700}
+
+    .table-wrap{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+    .table-scroll{overflow:auto}
+    table{width:100%;border-collapse:collapse}
+    thead th{
+      background:#f5f8fc;color:#607689;font-size:12px;font-weight:700;
+      text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);white-space:nowrap;
+    }
+    tbody td{
+      padding:13px 14px;border-bottom:1px solid #edf2f7;font-size:13px;color:#31475e;white-space:nowrap;
+    }
+    tbody tr:hover{background:#fafcff}
+    tbody tr:last-child td{border-bottom:none}
+    .name-strong{font-weight:700;color:#1f3550}
+    .status-pill,.priority-pill{
+      display:inline-flex;align-items:center;justify-content:center;
+      height:24px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:700;
+    }
+    .status-firm{background:#e9f5ec;color:#498d5a}
+    .status-budgetary{background:#fff3e1;color:#ad7a17}
+    .status-proceed{background:#e8f4ff;color:#2e6eb6}
+    .status-open{background:#eef2f8;color:#607689}
+    .status-risk{background:#fff0f0;color:#d45757}
+    .priority-high{background:#ffe6e6;color:#dc4f4f}
+    .priority-mid{background:#fff2dd;color:#c07c09}
+    .priority-top{background:#e8f2ff;color:#3977cc}
+    .link-btn{color:#4a90e2;cursor:pointer;font-weight:700}
+    .right-note{color:var(--text-3);font-size:12px}
+
+    .split-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .split-header h4{font-size:16px;color:#223548}
+    .inline-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+    /* 下方审批待办 —— 对齐本部 */
+    .approval-top{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:18px 22px 10px;
+    }
+    .approval-tabs{display:flex;gap:38px;align-items:flex-end;flex-wrap:wrap}
+    .approval-tab{
+      position:relative;padding:12px 0 10px;border:none;background:none;cursor:pointer;
+      font-size:16px;font-weight:700;color:#2f3d4b;
+      margin-right:0;
+    }
+    .approval-tab.active{color:#3d84e3}
+    .approval-tab.active::after{
+      content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:#3d84e3;border-radius:999px;
+    }
+    .approval-actions{display:flex;align-items:center;gap:14px;color:#3d84e3;font-weight:600;font-size:13px}
+    .approval-actions .help-icon{width:16px;height:16px;stroke:#3d84e3;fill:none;stroke-width:1.7}
+    .approval-body{padding:0 22px 22px}
+    .filters{display:grid;grid-template-columns:repeat(4,minmax(190px,1fr)) 68px 68px;gap:16px;align-items:center;margin-top:10px;margin-bottom:16px}
+    .field{
+      height:34px;border:1px solid #d7dee8;background:#fff;border-radius:4px;
+      padding:0 12px;display:flex;align-items:center;gap:8px;color:#9aa7b5;
+    }
+    .field input{border:none;outline:none;flex:1;min-width:0;background:none;font-size:12.5px;color:#5f6f7f}
+    .field input::placeholder{color:#a6afb9}
+    .field-icon{width:15px;height:15px;flex:0 0 auto;stroke:#7b8794;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+    .field-icon.right{margin-left:auto}
+    .btn{
+      height:34px;border-radius:4px;border:1px solid #d4dbe4;background:#fff;color:#475569;
+      padding:0 16px;font-weight:600;cursor:pointer;font-size:12.5px;
+    }
+    .btn.primary{background:#3f83df;color:#fff;border-color:#3f83df}
+    .btn:hover{filter:brightness(.99)}
+    .approval-panel .table-wrap{border:none;border-radius:0;overflow:hidden}
+    .approval-panel thead th{background:#f2f5f9;color:#374151;font-size:12px;padding:11px 14px;border-bottom:none}
+    .empty-area{
+      height:250px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#b8c0ca;gap:8px
+    }
+    .empty-icon{
+      width:46px;height:38px;background:transparent;border:none;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .empty-icon svg{width:46px;height:38px;stroke:#d8dde4;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+
+
+    /* ===== 本次新增：日期范围选择器 ===== */
+    .date-range-wrap{position:relative;min-width:0}
+    .date-range-wrap .field{width:100%}
+    .date-range-wrap .field-icon.right{cursor:pointer}
+    .date-range-picker{
+      display:none;position:absolute;left:0;top:40px;width:640px;
+      background:#fff;border:1px solid #d8e2ee;border-radius:4px;
+      box-shadow:0 8px 24px rgba(28,61,103,.16);z-index:80;
+      padding:10px 12px 12px;
+    }
+    .date-range-picker.open{display:block}
+    .drp-toolbar{
+      height:34px;display:grid;grid-template-columns:28px 28px 1fr 1fr 28px 28px;
+      align-items:center;border-bottom:1px solid #edf1f6;margin-bottom:8px;
+    }
+    .drp-nav{
+      width:26px;height:26px;border:none;background:transparent;color:#8b98a6;
+      display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px;
+      font-size:18px;line-height:1;
+    }
+    .drp-nav:hover{background:#f3f7fc;color:#3d84e3}
+    .drp-title{text-align:center;font-size:13px;color:#4b5563;font-weight:600}
+    .drp-months{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .drp-month{padding:0 8px 4px}
+    .drp-week,.drp-days{display:grid;grid-template-columns:repeat(7,1fr);text-align:center}
+    .drp-week span{height:28px;line-height:28px;font-size:12px;color:#687684}
+    .drp-day{
+      height:32px;border:none;background:transparent;border-radius:4px;
+      color:#596673;font-size:12px;cursor:pointer;position:relative;
+    }
+    .drp-day:hover{background:#eef5ff;color:#2f6db5}
+    .drp-day.muted{color:#c5cbd2}
+    .drp-day.in-range{background:#f0f6ff;border-radius:0}
+    .drp-day.range-start,.drp-day.range-end{background:#4a90e2;color:#fff;border-radius:4px}
+    .drp-day.today:not(.range-start):not(.range-end){box-shadow:inset 0 0 0 1px #8db8ef;color:#3d84e3}
+
+    /* ===== 本次新增：照搬 v1.3 的工作重点 / 我的跟进货盘交互所需样式 ===== */
+    .seg-tag{display:inline-block;padding:1px 8px;border-radius:4px;font-size:11px;font-weight:600}
+    .seg-tag.spot{background:#edf2f9;color:#4a72a8}
+    .seg-tag.proj{background:#e8f3f2;color:#3e827f}
+    .status-fixed{background:#f3eddf;color:#8a6a3c}
+    .status-booked{background:#eceaf4;color:#6c5f94}
+    .priority-normal{background:#eaf1fa;color:#4a72a8}
+    .priority-badge{
+      display:inline-flex;align-items:center;justify-content:center;min-width:50px;height:24px;
+      padding:0 10px;border-radius:999px;font-size:12px;font-weight:700;
+    }
+    .pid-link{color:#2563eb;font-weight:700;text-decoration:none;cursor:pointer}
+    .pid-link:hover{text-decoration:underline}
+    .hp-empty{padding:26px!important;text-align:center!important;color:#a8bccf!important;font-size:12px!important}
+    #focus-high tbody tr{cursor:pointer}
+
+    /* ===== 本次新增：需关注 / 待跟进完整照搬 v1.3 的交互结构 ===== */
+    #focus-attention .alert-pane-bd{padding:0}
+    #focus-attention .alert-row-h{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+    #focus-attention .alert-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border:1px solid #f0e6d8;background:#fffbf4;border-radius:7px;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s}
+    #focus-attention .alert-item:hover{background:#fef6e9}
+    #focus-attention .alert-item.red{border-color:#f5dada;background:#fff6f6}
+    #focus-attention .alert-item.red:hover{background:#fdecec}
+    #focus-attention .alert-item.on{border-color:#9ec5f5;background:#eff6ff;box-shadow:inset 0 0 0 1px #bfd8f5}
+    #focus-attention .alert-ic{width:30px;height:30px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+    #focus-attention .alert-ic.amber{background:#fef3c7;color:#b45309}
+    #focus-attention .alert-ic.red{background:#fee2e2;color:#b91c1c}
+    #focus-attention .alert-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    #focus-attention .alert-tx{flex:1;min-width:0}
+    #focus-attention .alert-tx .t{font-size:12.5px;color:#3a5a7a;font-weight:600}
+    #focus-attention .alert-cnt{font-size:20px;font-weight:700;color:#b45309}
+    #focus-attention .alert-cnt.red{color:#b91c1c}
+    #focus-attention .alert-arrow{color:#c8d6e5;font-size:14px}
+    #focus-attention .alert-detail-table tbody tr{cursor:pointer}
+    #focus-attention .alert-detail-table tbody tr:hover{background:#f5f9fe}
+    .status-lost{background:#f3e5e3;color:#985c55}
+
+    .hidden{display:none !important}
+    .toast{
+      position:fixed;right:22px;bottom:22px;background:rgba(34,53,72,.92);color:#fff;
+      padding:12px 16px;border-radius:12px;box-shadow:0 10px 26px rgba(0,0,0,.18);font-size:13px;
+      opacity:0;transform:translateY(10px);transition:.18s;pointer-events:none;z-index:100;
+    }
+    .toast.show{opacity:1;transform:translateY(0)}
+  
+
+    /* ===== auto-prototype + ui-ux-pro-max 调整：我要办理 / 工作重点 / 我的跟进货盘 / 分页 ===== */
+    .quick-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;padding-top:6px}
+    .quick-card{border:1px solid #dfe8f2;background:#fff;border-radius:16px;padding:20px 18px 16px;min-height:262px;box-shadow:none;display:flex;flex-direction:column}
+    .quick-card-head{margin-bottom:16px}
+    .quick-card-head h3{font-size:22px;color:#234567;line-height:1.1;font-weight:700}
+    .menu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .menu-item{border:1px solid #edf1f5;background:#f7f8fa;color:#5d6f81;border-radius:6px;min-height:38px;padding:6px 10px;font-size:14px;font-weight:600;box-shadow:none}
+    .menu-item.wide{grid-column:1 / -1}
+    .menu-item.emphasis{background:#f7f8fa;border-color:#edf1f5;color:#5d6f81}
+    .menu-item:hover{transform:none;background:#f3f7fb;border-color:#dbe5ef;box-shadow:none}
+    .quick-foot{margin-top:auto;padding-top:18px;border-top:none;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+    .quick-link{color:#4a8ef0;font-weight:600}
+    .quick-foot-muted{color:#bcc5cf;font-weight:600}
+    .mid-panel .primary-tabs{padding:0 22px;border-bottom:1px solid var(--line)}
+    .mid-panel .primary-pane{padding:22px}
+    .section-card{border:1px solid #e6edf5;border-radius:16px;background:#fff;overflow:hidden}
+    .focus-card{border-top:none}
+    .focus-pane{display:none}
+    .focus-pane.active{display:block}
+    .section-card-head{display:flex;align-items:center;gap:12px;padding:18px 22px 14px;border-bottom:1px solid #edf2f7}
+    .focus-tabs{display:flex;align-items:center;gap:24px}
+    .focus-tab-btn{border:none;background:none;padding:0;cursor:pointer;font-size:15px;font-weight:700;color:#355677;display:flex;align-items:center;gap:8px;position:relative}
+    .focus-tab-btn .cnt{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:20px;padding:0 6px;border-radius:10px;background:#eaf1fa;color:#4a72a8;font-size:11px;font-weight:700}
+    .focus-tab-btn.active{color:#2563eb}
+    .focus-tab-btn.active::after{content:'';position:absolute;left:0;right:0;bottom:-14px;height:3px;background:#2f7af8;border-radius:2px}
+    .hp-toolbar{margin-left:auto;display:flex;align-items:center;gap:8px}
+    .chip-filter{display:inline-flex;gap:5px}
+    .chip-filter button{border:1px solid #D1DCE8;background:#fff;color:#5a7a9a;height:28px;padding:0 12px;border-radius:14px;font-size:11.5px;cursor:pointer;font-family:inherit;transition:all .12s}
+    .chip-filter button.on{background:#EFF6FF;border-color:#9EC5F5;color:#2563EB;font-weight:600}
+    .chip-filter button b{font-weight:700;margin-left:2px}
+    .compact-table-wrap{border:none;border-radius:0;background:transparent;box-shadow:none}
+    .hp-scroll{max-height:unset;overflow:auto}
+    #focus-hp .hp-scroll{height:auto;max-height:none}
+    .hp-table{width:100%;border-collapse:collapse;min-width:100%}
+    .hp-table th{position:sticky;top:0;background:#F5F8FC;text-align:left;font-size:11px;font-weight:600;color:#5a7a9a;padding:12px;border-bottom:1px solid #E8EDF3;white-space:nowrap;z-index:2}
+    .hp-table td{padding:12px 12px;border-bottom:1px solid #F2F5F9;font-size:12px;color:#3a5a7a;white-space:nowrap}
+    .hp-table tbody tr{cursor:pointer;transition:background .12s}
+    .hp-table tbody tr:hover{background:#F5F9FE}
+    .hp-table tbody tr:last-child td{border-bottom:none}
+    .hp-name,.name-strong{font-weight:600;color:#1a3a5c}
+    .hp-val{font-family:'DIN Alternate','Arial Narrow',sans-serif;font-weight:700;color:#1a3a5c}
+    .hp-empty{padding:26px!important;text-align:center!important;color:#a8bccf!important;font-size:12px!important}
+    .my-cargo-scroll{max-height:none;overflow:auto}
+    .my-cargo-table th,.my-cargo-table td{padding:12px 10px;font-size:11.5px}
+    .project-cargo-table{min-width:1280px}
+    .my-cargo-toolbar{margin-left:auto}
+    .pid-link{color:#2563EB;font-weight:700;text-decoration:none;cursor:pointer}
+    .pid-link:hover{text-decoration:underline}
+    .priority-badge{display:inline-flex;align-items:center;justify-content:center;min-width:50px;text-align:center;padding:2px 8px;border-radius:9px;font-size:10.5px;font-weight:700}
+    .priority-high{background:#FEE2E2;color:#B91C1C}
+    .priority-normal{background:#EAF1FA;color:#4A72A8}
+    .seg-tag{display:inline-block;padding:1px 8px;border-radius:4px;font-size:10.5px;font-weight:600}
+    .seg-tag.spot{background:#EDF2F9;color:#4A72A8}
+    .seg-tag.proj{background:#E8F3F2;color:#3E827F}
+    .badge{display:inline-block;padding:2px 8px;border-radius:9px;font-size:11px;font-weight:600}
+    .bdg-open{background:#E4EFE9;color:#4A7A63}
+    .bdg-firm{background:#E6ECF6;color:#4A6494}
+    .bdg-fixed{background:#F3EDDF;color:#8A6A3C}
+    .bdg-booked{background:#ECEAF4;color:#6C5F94}
+    .bdg-lost{background:#F3E5E3;color:#985C55}
+    .bdg-budgetary{background:#F3EDDF;color:#8A6A3C}
+    .bdg-proceed{background:#E4EFE9;color:#4A7A63}
+    .bdg-closed{background:#EEF1F5;color:#6A7D90}
+    .alert-pane-bd{padding:12px 15px 16px}
+    .alert-row-h{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .alert-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border:1px solid #f0e6d8;background:#fffbf4;border-radius:7px;cursor:pointer;transition:background .15s,border-color .15s,box-shadow .15s}
+    .alert-item:hover{background:#fef6e9}
+
+    .alert-item.high{border-color:#d8e8fb;background:#f5f9ff}
+    .alert-item.high:hover{background:#eef6ff}
+    .alert-ic.blue{background:#eaf3ff;color:#2563eb}
+    .alert-cnt.blue{color:#2563eb}
+    .alert-item.red{border-color:#f5dada;background:#fff6f6}
+    .alert-item.red:hover{background:#fdecec}
+    .alert-item.on{border-color:#9EC5F5;background:#EFF6FF;box-shadow:inset 0 0 0 1px #BFD8F5}
+    .alert-ic{width:30px;height:30px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+    .alert-ic.amber{background:#FEF3C7;color:#B45309}
+    .alert-ic.red{background:#FEE2E2;color:#B91C1C}
+    .alert-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+    .alert-tx{min-width:0;flex:1}
+    .alert-tx .t{font-size:12px;font-weight:400;color:#5a7a9a;font-family:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .alert-item.on .alert-tx .t{color:#5a7a9a;font-weight:600}
+    .alert-cnt{font-size:15px;font-weight:800;color:#b45309;line-height:1}
+    .alert-cnt.red{color:#B91C1C}
+    .alert-arrow{color:#b9c6d3;font-size:16px;line-height:1;flex-shrink:0}
+    .section-title-wrap{display:flex;align-items:center;gap:8px}
+    .section-title-wrap h3{font-size:16px;color:#1a3a5c;font-weight:700}
+    .title-bar{width:3px;height:16px;background:#4a90e2;border-radius:3px;display:inline-block}
+    .table-pagination{display:flex;align-items:center;justify-content:flex-end;gap:16px;padding:14px 20px 18px;border-top:1px solid #edf2f7;background:#fff;flex-wrap:wrap}
+    .pager-info{font-size:12px;color:#7d91a7}
+    .pager-main{display:flex;align-items:center;gap:4px}
+    .pager-btn,.pager-num,.pager-ellipsis{height:28px;min-width:28px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+    .pager-btn,.pager-num{border:1px solid #dbe5ef;background:#fff;color:#557190;cursor:pointer}
+    .pager-btn[disabled]{opacity:.45;cursor:not-allowed}
+    .pager-num.active{background:#4a90e2;border-color:#4a90e2;color:#fff;font-weight:700}
+    .pager-ellipsis{color:#98a9bc;padding:0 4px}
+    .pager-size{font-size:12px;color:#7d91a7}
+    #approvalPager{padding-left:0;padding-right:0;background:transparent;border-top:1px solid #eef3f7}
+    @media (max-width: 1280px){
+      .quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .alert-row-h{grid-template-columns:1fr}
+      .section-card-head{flex-wrap:wrap}
+      .hp-toolbar,.my-cargo-toolbar{margin-left:0}
+    }
+
+
+
+    /* ===== 本轮修订：我要办理改为 3 块，风格对齐参考图 ===== */
+    .quick-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .quick-card.quick-card-slim{min-height:208px;padding:14px;border:1px solid #dbe4ee;border-radius:8px;background:#fbfcfd;box-shadow:none}
+    .quick-card.quick-card-slim .quick-card-head{margin-bottom:12px}
+    .quick-card.quick-card-slim .quick-card-head h3{font-size:15px;line-height:1.2;font-weight:700;color:#1f1f1f}
+    .quick-card.quick-card-slim .menu-grid{gap:8px}
+    .quick-card.quick-card-slim .menu-item{min-height:30px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border:1px solid #e2e8f0;border-radius:4px;color:#1f1f1f;font-size:11.5px;font-weight:600;padding:4px 7px;box-shadow:none}
+    .quick-card.quick-card-slim .menu-item:hover{background:#eef1f5;border-color:#d8e0ea;transform:none;box-shadow:none}
+    .quick-card.quick-card-slim .menu-item.emphasis{background:#f3f4f6;border-color:#e2e8f0;color:#1f1f1f}
+    .quick-card.quick-card-slim .quick-foot{margin-top:auto;padding-top:11px;display:flex;align-items:center;justify-content:space-between;font-size:11.5px}
+    .quick-card.quick-card-slim .quick-foot-split span{flex:1;text-align:center;position:relative}
+    .quick-card.quick-card-slim .quick-foot-split span + span::before{content:'';position:absolute;left:0;top:3px;bottom:3px;width:1px;background:#e5ebf2}
+    .quick-card.quick-card-slim .quick-link{color:#3f83df;font-weight:400}
+    .quick-card.quick-card-slim .quick-foot-muted{color:#c0c6cf;font-weight:400}
+    .menu-grid-contract .menu-item.wide,.menu-grid-scenario .menu-item.wide,.menu-grid-inquiry .menu-item.wide{grid-column:1 / -1}
+    .follow-cargo-table{min-width:1420px}
+    .follow-card .section-card-head{padding:16px 18px 14px}
+    .follow-card .my-cargo-scroll{max-height:none;overflow:auto}
+    .follow-card .my-cargo-table th{padding:12px 10px;font-size:11.5px}
+    .follow-card .my-cargo-table td{padding:10px 10px;font-size:11.5px}
+
+
+
+    /* ===== 本轮精确调整：边框/筛选位置/Freight/页面横向宽度 ===== */
+    .page{max-width:none;width:100%;}
+    .mid-panel .primary-tabs{display:flex;align-items:flex-end;}
+    .primary-tab-actions{margin-left:auto;display:flex;align-items:center;padding-bottom:9px;}
+    .focus-card,.follow-card{border:none;border-radius:0;}
+    #focusPane .focus-card,#followPane .follow-card{box-shadow:none;}
+    #focus-alert .alert-pane-bd{padding-top:0;}
+    #focus-alert .hp-table th:nth-child(6),
+    #focus-alert .hp-table td:nth-child(6){min-width:104px;}
+    #focus-alert .hp-table td.focus-freight{
+      font-family:inherit;
+      font-weight:400;
+      color:#3a5a7a;
+    }
+
+
+    /* ===== 本轮：我的跟进 - 现货 / 项目货二级 Tab ===== */
+    .follow-segment-tabs{display:flex;align-items:center;gap:26px;height:54px;border-bottom:1px solid #edf2f7;padding:0 4px;margin-bottom:0}
+    .follow-segment-tab{position:relative;border:none;background:none;color:#355677;font-size:15px;font-weight:700;padding:8px 0 9px;cursor:pointer;font-family:inherit;transition:color .15s;transform:translateY(-3px)}
+    .follow-segment-tab:hover{color:#2563eb}
+    .follow-segment-tab.active{color:#2563eb}
+    .follow-segment-tab.active::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;background:#2f7af8;border-radius:2px}
+    #followSegmentTabs #spotCargoFilter{margin-left:auto;align-items:center}
+    #followPane{padding-top:10px}
+
+
+    /* ===== 本轮指定修改：我的跟进看板（默认收起，可展开） ===== */
+    .follow-dashboard-toggle{
+      min-width:94px;height:32px;margin-left:2px;padding:0 12px;border:1px solid #d7e3ef;background:#fff;border-radius:6px;
+      display:inline-flex;align-items:center;justify-content:center;gap:5px;color:#587595;cursor:pointer;flex:0 0 auto;
+      font-family:inherit;font-size:12px;font-weight:600;line-height:1;transition:background .18s,color .18s,border-color .18s;
+    }
+    .follow-dashboard-toggle:hover{background:#f1f6fd;border-color:#b9cee6;color:#2f6db5}
+    .follow-dashboard-toggle:focus-visible{outline:2px solid #9ec5f5;outline-offset:2px}
+    .follow-dashboard-body{padding:14px 0 0}
+    .follow-dashboard-body.collapsed{display:none}
+    .follow-dashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .follow-dashboard-card{
+      min-width:0;min-height:286px;border:1px solid #e1e8f0;border-radius:8px;background:#fff;
+      padding:14px 16px 12px;overflow:hidden;
+    }
+    .follow-dashboard-title{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700;color:#24466b;padding-bottom:8px;border-bottom:1px solid #edf2f7}
+    .follow-dashboard-title::before{content:'';width:3px;height:16px;border-radius:2px;background:#4a90e2;flex:0 0 auto}
+    .follow-dashboard-chart{width:100%;height:230px}
+    @media (max-width: 1180px){.follow-dashboard-grid{grid-template-columns:1fr}}
+
+
+
+    /* ===== 本轮指定修改：删除我的跟进顶部筛选 + 缩小看板画幅 ===== */
+    #followSegmentTabs{gap:20px;padding:0 2px}
+    #followSegmentTabs .follow-dashboard-toggle{margin-left:auto}
+    .follow-dashboard-body{padding:10px 0 0}
+    .follow-dashboard-grid{grid-template-columns:minmax(0,4fr) minmax(0,6fr);gap:12px}
+    .follow-dashboard-card{min-height:330px;padding:12px 14px 10px;border-radius:10px}
+    .follow-dashboard-chart{height:276px}
+    .follow-pol-map,.follow-pol-rank{min-height:220px}
+
+    /* ===== Type 看板：完全对齐 v1.3 的 pie-panel 风格 ===== */
+    .fd-pie-panel{display:flex;align-items:center;justify-content:center;flex:1;min-height:182px;height:100%}
+    .fd-pie-left{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;min-width:0;height:100%}
+    .fd-pie-chart{position:relative;width:118px;height:118px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 6px #F5F8FC;cursor:pointer;}
+    .fd-pie-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;}
+    .fd-pie-center::before{content:'';position:absolute;width:56px;height:56px;background:#fff;border-radius:50%;box-shadow:inset 0 0 0 1px #EEF2F8;}
+    .fd-pie-total{position:relative;z-index:1;font-size:20px;font-weight:700;color:#1a3a5c;font-family:'DIN Alternate','Arial Narrow',sans-serif;line-height:1;}
+    .fd-pie-legend{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;padding-right:6px;}
+    .fd-pie-leg-row{display:flex;align-items:center;gap:6px;padding:2px 4px;border-radius:4px;cursor:pointer;}
+    .fd-pie-leg-row:hover{background:#EEF5FF;}
+    .fd-pie-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+    .fd-pie-leg-lbl{flex:1;font-size:13px;color:#4a6a8a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .fd-pie-leg-val{font-size:13px;font-weight:700;color:#3a5a7a;font-family:'DIN Alternate','Arial Narrow',sans-serif;min-width:18px;text-align:right;}
+    .fd-pie-leg-pct{font-size:12px;color:#9ab0c6;min-width:40px;text-align:right;}
+    .follow-pie-tip{position:fixed;background:#1a3a5c;color:#fff;padding:7px 11px;border-radius:6px;font-size:11.5px;pointer-events:none;z-index:800;opacity:0;transition:opacity .1s;box-shadow:0 4px 14px rgba(0,0,0,.18);white-space:nowrap;line-height:1.45;}
+    .follow-pie-tip.show{opacity:1;}
+    .follow-pie-tip .t{font-weight:700;color:#BFE0FF;}
+    .follow-pie-tip .n{font-family:'DIN Alternate','Arial Narrow',sans-serif;font-weight:700;font-size:13px;}
+
+    /* ===== 货盘状态分布：完全复用 v1.3 饼图样式 ===== */
+    #followStatusChart{display:flex;align-items:center;justify-content:center;}
+    .fs-pie-panel{display:flex;align-items:center;justify-content:center;flex:1;min-height:150px;width:100%;height:100%;}
+    .fs-pie-left{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;min-width:0;height:100%;}
+    .fs-pie-chart{position:relative;width:118px;height:118px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 6px #F5F8FC;cursor:pointer;}
+    .fs-pie-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;}
+    .fs-pie-center::before{content:'';position:absolute;width:56px;height:56px;background:#fff;border-radius:50%;box-shadow:inset 0 0 0 1px #EEF2F8;}
+    .fs-pie-total{position:relative;z-index:1;font-size:20px;font-weight:700;color:#1a3a5c;font-family:'DIN Alternate','Arial Narrow',sans-serif;line-height:1;}
+    .fs-pie-legend{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;padding-right:6px;}
+    .fs-pie-leg-row{display:flex;align-items:center;gap:6px;padding:2px 4px;border-radius:4px;cursor:default;}
+    .fs-pie-leg-row:hover{background:#EEF5FF;}
+    .fs-pie-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+    .fs-pie-leg-lbl{flex:1;font-size:13px;color:#4a6a8a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .fs-pie-leg-val{font-size:13px;font-weight:700;color:#3a5a7a;font-family:'DIN Alternate','Arial Narrow',sans-serif;min-width:18px;text-align:right;}
+    .fs-pie-leg-pct{font-size:12px;color:#9ab0c6;min-width:40px;text-align:right;}
+
+
+    /* ===== POL 热点图：全球地理分布 + 热力层 + 港口气泡 ===== */
+    .follow-pol-wrap{display:flex;flex-direction:column;height:100%;gap:8px;}
+    .follow-pol-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding-top:2px;}
+    .follow-pol-metrics{display:inline-flex;gap:6px;}
+    .follow-pol-metrics button{border:1px solid #d3deea;background:#fff;color:#567292;border-radius:13px;height:26px;padding:0 11px;font-size:11.5px;cursor:pointer;font-family:inherit;transition:all .15s;}
+    .follow-pol-metrics button:hover{border-color:#aac8eb;color:#2f6db5;background:#f8fbff;}
+    .follow-pol-metrics button.on{background:#eff6ff;border-color:#9ec5f5;color:#2563eb;font-weight:600;}
+    .follow-pol-legend{display:flex;align-items:center;gap:7px;font-size:11px;color:#8aa0b6;white-space:nowrap;}
+    .follow-pol-gradient{width:92px;height:8px;border-radius:999px;background:linear-gradient(90deg,#5b91d8 0%,#55b9c8 38%,#e9c85c 68%,#e67755 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.45);}
+    .follow-pol-content{display:grid;grid-template-columns:minmax(0,3fr) minmax(160px,1fr);gap:10px;min-height:0;flex:1;}
+    .follow-pol-map{position:relative;min-height:220px;border:1px solid #e5edf5;border-radius:8px;background:#f7faff;overflow:hidden;}
+    .follow-pol-bg{position:absolute;inset:0;width:100%;height:100%;z-index:0;transform-origin:0 0;transition:transform .28s ease;}
+    .follow-pol-canvas{position:absolute;inset:0;z-index:1;}
+    .follow-pol-map.is-zoomed{box-shadow:inset 0 0 0 1px rgba(74,144,226,.12);}
+    .follow-pol-bg path{vector-effect:non-scaling-stroke;}
+    .follow-pol-continent-labels{transition:opacity .18s ease;}
+    .follow-pol-map.is-zoomed .follow-pol-continent-labels{opacity:0;}
+    .follow-pol-reset{position:absolute;right:10px;top:10px;z-index:4;display:none;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:1px solid #c9d9eb;border-radius:7px;background:rgba(255,255,255,.94);color:#42698e;font-family:inherit;cursor:pointer;box-shadow:0 3px 10px rgba(37,74,111,.10);transition:background .15s,border-color .15s,color .15s;}
+    .follow-pol-reset:hover{background:#f4f8fd;border-color:#9fc0e6;color:#2563eb;}
+    .follow-pol-reset:focus-visible{outline:2px solid #9ec5f5;outline-offset:2px;}
+    .follow-pol-reset svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+    .follow-pol-map.is-zoomed .follow-pol-reset{display:inline-flex;}
+    @media (prefers-reduced-motion: reduce){.follow-pol-bg,.follow-pol-continent-labels{transition:none;}}
+    .follow-pol-map-note{position:absolute;left:10px;bottom:8px;z-index:2;font-size:10px;color:#9aabbd;background:rgba(255,255,255,.82);padding:3px 7px;border-radius:5px;pointer-events:none;}
+    .follow-pol-rank{border:1px solid #e5edf5;border-radius:8px;background:#fbfdff;padding:10px 10px 8px;display:flex;flex-direction:column;min-height:220px;overflow:hidden;}
+    .follow-pol-rank-title{font-size:12px;font-weight:700;color:#365878;margin-bottom:8px;}
+    .follow-pol-rank-sub{font-size:10px;color:#9aabbd;font-weight:400;margin-left:4px;}
+    .follow-pol-rank-list{display:flex;flex-direction:column;gap:5px;overflow:hidden;}
+    .follow-pol-rank-row{display:grid;grid-template-columns:18px minmax(0,1fr) auto;align-items:center;gap:7px;padding:3px 2px;border-radius:5px;font-size:11px;color:#51708f;}
+    .follow-pol-rank-row:hover{background:#f1f6fc;}
+    .follow-pol-rank-no{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#eef5ff;color:#2563eb;font-size:10px;font-weight:700;}
+    .follow-pol-rank-info{min-width:0;display:flex;flex-direction:column;line-height:1.25;}
+    .follow-pol-rank-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#426381;font-weight:600;}
+    .follow-pol-rank-country{font-size:9.5px;color:#9badbe;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .follow-pol-rank-val{font-weight:700;color:#1f3f62;font-family:'DIN Alternate','Arial Narrow',sans-serif;white-space:nowrap;}
+
+    /* ===== 船名：模仿“超期账单统计” ===== */
+    .follow-vessel-title{min-height:34px;}
+    .follow-vessel-title-text{white-space:nowrap;}
+    .follow-vessel-title-filter{margin-left:auto;display:flex;align-items:center;}
+    .follow-vessel-title-filter .mini-sel{height:30px;min-width:152px;border-radius:8px;padding:0 30px 0 12px;font-size:12px;line-height:30px;background-position:right 9px center;}
+    .follow-vessel-shell{height:100%;display:flex;flex-direction:column;min-width:0;}
+    .seg{display:inline-flex;gap:0;background:#f3f5f8;border-radius:10px;padding:2px;}
+    .seg button{height:30px;padding:0 18px;border:none;border-radius:8px;background:transparent;color:#7b8896;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+    .seg button.active{background:#fff;color:#4a78b8;box-shadow:0 1px 3px rgba(73,109,144,.12);}
+    .mini-sel{height:34px;border:1px solid #d7dee8;border-radius:10px;padding:0 12px;font-size:12px;color:#4f5f70;background:#fff;outline:none;font-family:inherit;min-width:98px;}
+    .follow-vessel-bar{height:168px;width:100%;margin-top:14px;min-width:0;}
+    .follow-vessel-detail{display:none;flex:1;min-height:0;}
+    .follow-vessel-detail-top{display:flex;align-items:center;justify-content:space-between;margin:8px 0 7px;gap:10px;}
+    .follow-vessel-detail-title{font-size:12.5px;color:#56616d;font-weight:600;}
+    .follow-vessel-back{color:#4a78b8;font-size:12px;cursor:pointer;white-space:nowrap;}
+    .follow-vessel-table-wrap{border:1px solid #edf2f7;border-radius:8px;overflow:auto;max-height:150px;background:#fff;}
+    .follow-vessel-table{width:100%;border-collapse:collapse;min-width:540px;}
+    .follow-vessel-table th,.follow-vessel-table td{padding:8px 10px;font-size:11px;color:#607080;border-bottom:1px solid #f1f4f8;white-space:nowrap;text-align:left;}
+    .follow-vessel-table th{background:#f7f9fc;color:#6e7d8d;font-weight:600;position:sticky;top:0;z-index:1;}
+    .follow-vessel-table tr:last-child td{border-bottom:none;}
+    .follow-vessel-kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto;padding-top:10px;}
+    .follow-vessel-kpi-item{background:#f7f9fc;border-radius:8px;padding:10px 12px;}
+    .follow-vessel-kpi-item .k{font-size:11px;color:#8c99a7;margin-bottom:4px;}
+    .follow-vessel-kpi-item .v{font-size:14px;color:#3d84e3;font-weight:700;font-family:'DIN Alternate','Arial Narrow',sans-serif;}
+
+
+
+    /* ===== v2.3：我的跟进恢复 v1.4 列表 + 列表底部看板展开箭头 ===== */
+    #followSegmentTabs{gap:26px;padding:0 4px;}
+    #followSegmentTabs{border-bottom:none;}
+    .follow-table-filter-row{display:flex;align-items:center;justify-content:flex-end;height:54px;border-bottom:1px solid #edf2f7;padding:0 4px;margin-bottom:0;}
+    .follow-table-filter-row #spotCargoFilter{display:inline-flex;align-items:center;}
+    .follow-list-footer{display:flex;align-items:center;min-height:58px;border-top:1px solid #edf2f7;background:#fff;}
+    .follow-list-footer .follow-dashboard-toggle{margin-left:8px;margin-right:8px;flex:0 0 auto;}
+    .follow-list-footer #projectPager{flex:1;border-top:none;padding-top:14px;padding-bottom:14px;}
+    .follow-dashboard-entry{display:flex;align-items:center;padding:6px 8px 2px;}
+    .follow-dashboard-entry .follow-dashboard-toggle{margin-left:0;margin-right:0;}
+    .follow-dashboard-body{border-top:1px solid #edf2f7;padding-top:12px;}
+
+    /* ===== v2.3：船型 / 船名排名与下钻 ===== */
+    .follow-vessel-title-filter{margin-left:auto;display:flex;align-items:center;}
+    .follow-vessel-dimension-tabs{display:inline-flex;align-items:center;gap:2px;padding:2px;border:1px solid #d8e3ef;border-radius:8px;background:#f6f9fc;}
+    .follow-vessel-dimension-tab{height:25px;min-width:48px;padding:0 10px;border:none;border-radius:6px;background:transparent;color:#6c8197;font-size:11.5px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s,color .15s,box-shadow .15s;}
+    .follow-vessel-dimension-tab:hover{color:#2f6db5;background:#eef5fd;}
+    .follow-vessel-dimension-tab.on{background:#fff;color:#2563eb;box-shadow:0 1px 4px rgba(45,92,143,.12);}
+    .follow-vessel-drill-head{display:none;align-items:center;justify-content:space-between;gap:10px;height:30px;margin:6px 0 0;padding:0 2px;color:#61788f;font-size:11.5px;}
+    .follow-vessel-drill-head.show{display:flex;}
+    .follow-vessel-drill-label{font-weight:600;color:#426381;}
+    .follow-vessel-drill-back{border:none;background:none;color:#4a78b8;font-size:11.5px;font-family:inherit;cursor:pointer;padding:4px 2px;}
+    .follow-vessel-drill-back:hover{color:#2563eb;text-decoration:underline;}
+    .follow-vessel-bar{height:218px;width:100%;margin-top:7px;min-width:0;}
+    .follow-vessel-detail{height:232px;}
+    .follow-vessel-table-wrap{max-height:190px;}
+
+    /* ===== v2.4：仅微调两块环形图内容位置 ===== */
+    .fd-pie-left,.fs-pie-left{transform:translateX(16px);}
+
+    /* ===== v2.6：看板布局按本轮要求调整 ===== */
+    .follow-dashboard-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+    .follow-dashboard-card-pol{grid-column:1 / -1;}
+
+    /* ===== v2.7：仅调整看板纵向高度与第一排 60/40 横向占比 ===== */
+    .follow-dashboard-grid{grid-template-columns:minmax(0,3fr) minmax(0,3fr) minmax(0,4fr);}
+    .follow-dashboard-grid > .follow-dashboard-card:not(.follow-dashboard-card-pol){min-height:305px;}
+    .follow-dashboard-grid > .follow-dashboard-card:not(.follow-dashboard-card-pol) .follow-dashboard-chart{height:251px;}
+    .follow-dashboard-card-pol{min-height:384px;}
+    .follow-dashboard-card-pol .follow-dashboard-chart{height:330px;}
+
+
+    /* ===== v3.6：仅调整“我的跟进 > 项目货”列表字段与数据格式 ===== */
+    .follow-cargo-table.project-cargo-mode{min-width:1640px;}
+    .follow-cargo-table.project-cargo-mode th:nth-child(1){min-width:54px;}
+    .follow-cargo-table.project-cargo-mode th:nth-child(2){min-width:92px;}
+    .follow-cargo-table.project-cargo-mode th:nth-child(3){min-width:142px;}
+    .follow-cargo-table.project-cargo-mode th:nth-child(4){min-width:118px;}
+    .follow-cargo-table.project-cargo-mode th:nth-child(5){min-width:190px;}
+    .follow-cargo-table.project-cargo-mode th:nth-child(6){min-width:132px;}
+    .follow-cargo-table.project-cargo-mode th:nth-child(7){min-width:168px;}
+    .follow-cargo-table.project-cargo-mode th:nth-child(8){min-width:205px;}
+    .follow-cargo-table.project-cargo-mode th:nth-child(9){min-width:164px;}
+    .follow-cargo-table.project-cargo-mode th:nth-child(10){min-width:150px;}
+    .follow-cargo-table.project-cargo-mode th:nth-child(11){min-width:140px;}
+    .follow-cargo-table.project-cargo-mode th:nth-child(12){min-width:178px;}
+    .follow-cargo-table.project-cargo-mode .project-period-cell{white-space:nowrap;color:#3a5a7a;}
+    .follow-cargo-table.project-cargo-mode .project-updated-cell{white-space:nowrap;color:#9ab0c6;}
+
+</style>
+</head>
+<body>
+  <header class="topnav">
+    <div class="nav-left">
+      <div class="brand">
+        <div class="menu-btn">☰</div>
+        <div class="logo-mark">COSCO<br/>SHIPPING</div>
+      </div>
+      <div class="nav-tabs">
+        <div class="nav-tab">主页</div>
+        <div class="nav-tab active">揽货中心</div>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="scope-select">综合 ▾</div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke-width="1.8"/><path d="m20 20-4-4" fill="none" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input type="text" placeholder="搜索应用、菜单等" />
+      </div>
+      <div class="icon-btn" title="待办"><svg viewBox="0 0 24 24"><path d="M14 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-9"/><path d="M17.5 2.5a2.1 2.1 0 0 1 3 3L12 14l-4 1 1-4 8.5-8.5Z"/></svg></div>
+      <div class="icon-btn" title="通知"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 20a2 2 0 0 1-3.4 0"/></svg></div>
+      <div class="icon-btn" title="应用"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="6" height="6"/><rect x="15" y="3" width="6" height="6"/><rect x="3" y="15" width="6" height="6"/><rect x="15" y="15" width="6" height="6"/></svg></div>
+      <div class="user-chip"><div class="avatar">余</div><span>余哲 ▾</span></div>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="page-title">半潜揽货工作台</div>
+
+    <!-- 我要办理 -->
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <span class="panel-title">我要办理</span>
+        </div>
+        <button class="fold-btn" id="foldQuick" title="收起/展开">⌃</button>
+      </div>
+      <div class="panel-body" id="quickBody">
+        <div class="quick-grid">
+          <article class="quick-card quick-card-slim">
+            <div class="quick-card-head"><h3>Scenario</h3></div>
+            <div class="menu-grid menu-grid-scenario">
+              <div class="menu-item" data-name="Master Scenario">Master Scenario</div>
+              <div class="menu-item" data-name="Personal Scenario">Personal Scenario</div>
+              <div class="menu-item wide" data-name="Competitor Scenario">Competitor Scenario</div>
+            </div>
+          </article>
+
+          <article class="quick-card quick-card-slim">
+            <div class="quick-card-head"><h3>Inquiry</h3></div>
+            <div class="menu-grid menu-grid-inquiry">
+              <div class="menu-item" data-name="Spot Cargo">Spot Cargo</div>
+              <div class="menu-item" data-name="Project Cargo">Project Cargo</div>
+              <div class="menu-item wide" data-name="Price Viewer">Price Viewer</div>
+            </div>
+          </article>
+
+          <article class="quick-card quick-card-slim contract-card">
+            <div class="quick-card-head"><h3>Contract</h3></div>
+            <div class="menu-grid menu-grid-contract">
+              <div class="menu-item" data-name="物流供应商合同">物流供应商合同</div>
+              <div class="menu-item" data-name="船舶舱租合同">船舶舱租合同</div>
+              <div class="menu-item" data-name="船舶期租合同">船舶期租合同</div>
+              <div class="menu-item" data-name="程租配船">程租配船</div>
+              <div class="menu-item" data-name="舱租配船">舱租配船</div>
+              <div class="menu-item" data-name="航次任务单">航次任务单</div>
+              <div class="menu-item emphasis" data-name="Contract Register">Contract Register</div>
+              <div class="menu-item emphasis" data-name="LOI Register">LOI Register</div>
+              <div class="menu-item wide" data-name="航次任务变更 Task Change">航次任务变更 Task Change</div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 中部个性化区域 -->
+    <section class="panel mid-panel">
+      <div class="primary-tabs">
+        <button class="primary-tab active" data-primary="focusPane">需关注</button>
+        <button class="primary-tab" data-primary="followPane">我的跟进</button>
+        <div class="primary-tab-actions">
+          <div class="chip-filter" id="alertSegFilter">
+            <button class="on" onclick="setAlertSeg(this,'all')">全部 <b id="alertCntAll">9</b></button>
+            <button onclick="setAlertSeg(this,'spot')">现货 <b id="alertCntSpot">4</b></button>
+            <button onclick="setAlertSeg(this,'proj')">项目货 <b id="alertCntProj">5</b></button>
+          </div>
+          <button class="follow-dashboard-toggle" id="followDashboardToggle" type="button" aria-label="展开看板" aria-expanded="false" title="展开看板" style="display:none;">
+            <span id="followDashboardToggleText">展开看板</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="primary-pane active" id="focusPane">
+        <div class="section-card focus-card">
+          <div class="focus-pane active" id="focus-alert">
+            <div class="alert-pane-bd">
+              <div class="alert-row-h" id="alertCards"></div>
+              <div class="table-wrap compact-table-wrap" style="margin-top:12px;">
+                <div class="table-scroll hp-scroll alert-scroll">
+                  <table class="hp-table">
+                    <thead>
+                      <tr>
+                        <th>No.</th><th>Segment</th><th>Project Name</th><th>Status</th><th>Client</th><th>Market</th>
+                        <th>Freight</th><th>Laycan / Period</th><th>PIC</th><th>Updated</th>
+                      </tr>
+                    </thead>
+                    <tbody id="alertDetailBody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="table-pagination" id="alertPager"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="primary-pane" id="followPane">
+        <div class="section-card follow-card">
+          <div class="follow-segment-tabs" id="followSegmentTabs">
+            <button class="follow-segment-tab active" type="button" onclick="setFollowSegment(this,'spot')">现货</button>
+            <button class="follow-segment-tab" type="button" onclick="setFollowSegment(this,'proj')">项目货</button>
+            <div class="chip-filter" id="spotCargoFilter">
+              <button class="on" onclick="setMyCargoFilter('spot',this,'all')">全部 <b id="spotMineAll">0</b></button>
+              <button onclick="setMyCargoFilter('spot',this,'pinned')">置顶 <b id="spotMinePinned">0</b></button>
+              <button onclick="setMyCargoFilter('spot',this,'creator')">我创建 <b id="spotMineCreator">0</b></button>
+              <button onclick="setMyCargoFilter('spot',this,'pic')">我负责 <b id="spotMinePic">0</b></button>
+            </div>
+          </div>
+          <div class="follow-dashboard-body collapsed" id="followDashboardBody">
+            <div class="follow-dashboard-grid">
+              <section class="follow-dashboard-card">
+                <div class="follow-dashboard-title" id="followTypeTitle">Cargo Type 分布</div>
+                <div class="follow-dashboard-chart" id="followTypeChart"></div>
+              </section>
+              <section class="follow-dashboard-card">
+                <div class="follow-dashboard-title">货盘状态分布</div>
+                <div class="follow-dashboard-chart" id="followStatusChart"></div>
+              </section>
+              <section class="follow-dashboard-card">
+                <div class="follow-dashboard-title follow-vessel-title"><span class="follow-vessel-title-text">船舶排名</span><span class="follow-vessel-title-filter" id="followVesselTitleFilter"></span></div>
+                <div class="follow-dashboard-chart" id="followVesselChart"></div>
+              </section>
+              <section class="follow-dashboard-card follow-dashboard-card-pol">
+                <div class="follow-dashboard-title">POL 热点图</div>
+                <div class="follow-dashboard-chart" id="followPolChart"></div>
+              </section>
+            </div>
+          </div>
+          <div class="table-wrap compact-table-wrap">
+            <div class="table-scroll my-cargo-scroll">
+              <table class="hp-table my-cargo-table follow-cargo-table">
+                <thead><tr id="followCargoHeadRow">
+                  <th>No.</th><th>Priority</th><th>PID</th><th>Status</th><th>Charterer</th>
+                  <th>Freight</th><th>Cargo Type</th><th>LAYCAN</th><th>VESSEL</th>
+                  <th>POL</th><th>POD</th><th>PIC</th><th>Last Updated</th>
+                </tr></thead>
+                <tbody id="mySpotCargoBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="follow-list-footer">
+            <div class="table-pagination" id="projectPager"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 下方审批待办，与本部一致 -->
+    <section class="panel approval-panel">
+      <div class="approval-top">
+        <div class="approval-tabs">
+          <button class="approval-tab active">审批待办</button>
+          <button class="approval-tab">业务待办</button>
+          <button class="approval-tab">我发起的</button>
+          <button class="approval-tab">我已处理</button>
+          <button class="approval-tab">抄送给我</button>
+        </div>
+        <div class="approval-actions">
+          <svg class="help-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.7 9a2.4 2.4 0 0 1 4.6 1c0 1.8-2.3 2-2.3 3.8"/><path d="M12 17.2h.01"/></svg>
+          <span>＋ 新建流程</span>
+        </div>
+      </div>
+      <div class="approval-body">
+        <div class="filters">
+          <div class="field">
+            <svg class="field-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+            <input type="text" placeholder="输入关键词搜索" />
+          </div>
+          <div class="date-range-wrap" id="approvalDateWrap">
+            <div class="field" id="approvalDateField">
+              <input id="approvalDateInput" type="text" value="2026-05-07    →    2026-08-07" readonly />
+              <svg id="approvalCalendarBtn" class="field-icon right" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+            </div>
+            <div class="date-range-picker" id="approvalDatePicker" aria-hidden="true">
+              <div class="drp-toolbar">
+                <button class="drp-nav" type="button" data-delta="-12" title="上一年">«</button>
+                <button class="drp-nav" type="button" data-delta="-1" title="上个月">‹</button>
+                <div class="drp-title" id="drpTitleLeft"></div>
+                <div class="drp-title" id="drpTitleRight"></div>
+                <button class="drp-nav" type="button" data-delta="1" title="下个月">›</button>
+                <button class="drp-nav" type="button" data-delta="12" title="下一年">»</button>
+              </div>
+              <div class="drp-months">
+                <div class="drp-month">
+                  <div class="drp-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+                  <div class="drp-days" id="drpDaysLeft"></div>
+                </div>
+                <div class="drp-month">
+                  <div class="drp-week"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+                  <div class="drp-days" id="drpDaysRight"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="field"><input type="text" placeholder="请选择系统" /></div>
+          <div class="field">
+            <input type="text" placeholder="按创建人查找" />
+            <svg class="field-icon right" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+          </div>
+          <button class="btn primary">查询</button>
+          <button class="btn">重置</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>标题</th>
+                <th>当前节点</th>
+                <th>发起人</th>
+                <th>发起时间</th>
+                <th>系统来源</th>
+                <th>审批历史</th>
+                <th style="text-align:right">⚙</th>
+              </tr>
+            </thead>
+            <tbody id="approvalBody"></tbody>
+          </table>
+          <div class="empty-area" id="approvalEmpty">
+            <div class="empty-icon"><svg viewBox="0 0 64 48" aria-hidden="true"><path d="M12 16h12l4-5h12l4 5h8v24H12z"/><path d="M8 20h48l-4 23H12z"/></svg></div>
+            <div>暂无数据</div>
+          </div>
+          <div class="table-pagination" id="approvalPager"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <div class="follow-pie-tip" id="followPieTip"></div>
+
+  <script>
+    const toast = document.getElementById('toast');
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(()=>toast.classList.remove('show'), 1800);
+    }
+    function jump(target,filter,view){
+      showToast(`跳转 ${target} · ${view}${filter&&filter!=='—'?' · 预置筛选 '+filter:''}`);
+    }
+
+    // 我要办理收起/展开
+    const quickBody = document.getElementById('quickBody');
+    const foldQuick = document.getElementById('foldQuick');
+    let quickFolded = false;
+    foldQuick.addEventListener('click', ()=>{
+      quickFolded = !quickFolded;
+      quickBody.classList.toggle('hidden', quickFolded);
+      foldQuick.textContent = quickFolded ? '⌄' : '⌃';
+    });
+
+    // 菜单点击提示
+    document.querySelectorAll('.menu-item').forEach(item=>{
+      item.addEventListener('click', ()=>showToast('进入：' + item.dataset.name));
+    });
+
+    // 中部一级 tab
+    document.querySelectorAll('.primary-tab').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('.primary-tab').forEach(i=>i.classList.remove('active'));
+        document.querySelectorAll('.primary-pane').forEach(i=>i.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.primary).classList.add('active');
+        const isFocus = btn.dataset.primary === 'focusPane';
+        document.getElementById('alertSegFilter').style.display = isFocus ? 'inline-flex' : 'none';
+        document.getElementById('followDashboardToggle').style.display = isFocus ? 'none' : 'inline-flex';
+        const spotFilterEl=document.getElementById('spotCargoFilter');
+        if(spotFilterEl) spotFilterEl.style.display = isFocus ? 'none' : 'inline-flex';
+        if(!isFocus && followDashboardExpanded) requestAnimationFrame(renderFollowDashboard);
+      });
+    });
+
+    /* ===== 工作重点 / 我的跟进货盘 ===== */
+    const PAGE_SIZE = 10;
+    const pagerState = {hp:1, alert:1, project:1, approval:1};
+    function getPageList(page,totalPages){
+      if(totalPages<=7) return Array.from({length:totalPages},(_,i)=>i+1);
+      if(page<=4) return [1,2,3,4,5,'...',totalPages];
+      if(page>=totalPages-3) return [1,'...',totalPages-4,totalPages-3,totalPages-2,totalPages-1,totalPages];
+      return [1,'...',page-1,page,page+1,'...',totalPages];
+    }
+    function renderPager(id,key,total){
+      const box=document.getElementById(id);
+      if(!box) return;
+      const totalPages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+      const page=Math.min(Math.max(1,pagerState[key]||1),totalPages);
+      pagerState[key]=page;
+      const start=total===0?0:(page-1)*PAGE_SIZE+1;
+      const end=Math.min(page*PAGE_SIZE,total);
+      const nums=getPageList(page,totalPages).map(n=>n==='...'
+        ? '<span class="pager-ellipsis">...</span>'
+        : `<button class="pager-num ${n===page?'active':''}" onclick="setListPage('${key}',${n})">${n}</button>`
+      ).join('');
+      box.innerHTML=`<div class="pager-info">第 ${start}-${end} 条 共 ${total} 条</div>
+        <div class="pager-main">
+          <button class="pager-btn" onclick="setListPage('${key}',${page-1})" ${page===1?'disabled':''}>‹</button>
+          ${nums}
+          <button class="pager-btn" onclick="setListPage('${key}',${page+1})" ${page===totalPages?'disabled':''}>›</button>
+        </div>
+        <div class="pager-size">10 条/页</div>`;
+    }
+    function pageRows(rows,key){
+      const totalPages=Math.max(1,Math.ceil(rows.length/PAGE_SIZE));
+      const page=Math.min(Math.max(1,pagerState[key]||1),totalPages);
+      pagerState[key]=page;
+      const start=(page-1)*PAGE_SIZE;
+      return rows.slice(start,start+PAGE_SIZE);
+    }
+    window.setListPage=function(key,page){
+      const total = key==='hp' ? getHpRows().length : key==='alert' ? getAlertRows().length : key==='project' ? getProjectRows().length : APPROVAL_ROWS.length;
+      const totalPages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+      pagerState[key]=Math.min(Math.max(1,page),totalPages);
+      if(key==='hp') renderHP();
+      else if(key==='alert') renderAlertDetail();
+      else if(key==='project') renderMySpotCargo();
+      else if(key==='approval') renderApprovalList();
+    }
+
+    let alertActive='hp';
+    let alertSegMode='all';
+    const HP=[
+      {seg:'spot',name:'海上风电桩基运输',status:'Firm',sc:'firm',client:'Century Wind Power',market:'Wind',val:'5.32M USD',win:'15,Nov / 15,Dec,2026',pic:'吴丽萍',upd:'2026-06-28 15:20:00'},
+      {seg:'spot',name:'FPSO 模块海运',status:'Fixed',sc:'fixed',client:'Boskalis',market:'Offshore',val:'3.80M USD',win:'01 / 20,Sep,2026',pic:'LINZHEN',upd:'2026-06-27 09:10:00'},
+      {seg:'spot',name:'导管架运输 A',status:'Firm',sc:'firm',client:'TotalEnergies',market:'Oil & Gas',val:'4.15M USD',win:'05 / 25,Oct,2026',pic:'GUANG FU',upd:'2026-06-26 17:42:00'},
+      {seg:'spot',name:'风机塔筒批量',status:'Open',sc:'open',client:'Siemens Gamesa',market:'Wind',val:'2.60M USD',win:'01 / 30,Dec,2026',pic:'CHANG AN KOU',upd:'2026-06-25 11:05:00'},
+      {seg:'proj',name:'FPSO Module Transport',status:'Firm',sc:'firm',client:'TOTAL ENERGIES SE',market:'T & I',val:'',win:'Jul 2026 – Sep 2026',pic:'WANG LEI',upd:'2026-06-24 09:14:00'},
+      {seg:'proj',name:'重吊货盘测试',status:'Budgetary',sc:'budgetary',client:'GUANGZHOU OCEAN',market:'Offshore',val:'',win:'May 2026 – Jul 2026',pic:'GUANG FU',upd:'2026-06-27 10:49:00'},
+      {seg:'proj',name:'测试COA货盘0506',status:'Proceed',sc:'proceed',client:'CHINA OCEAN SHIPPING',market:'Oil & Gas',val:'',win:'May 2026 – May 2027',pic:'MU MIAN SONG',upd:'2026-06-22 15:22:00'},
+      {seg:'proj',name:'2个批次货盘',status:'Budgetary',sc:'budgetary',client:'COSCO SHIPPING GROUP',market:'Oil & Gas',val:'',win:'May 2026 – May 2026',pic:'TIAN XI',upd:'2026-06-21 15:08:00'},
+      {seg:'proj',name:'测试COA货盘',status:'Proceed',sc:'proceed',client:'CHINA OCEAN SHIPPING',market:'Oil & Gas',val:'',win:'May 2026 – May 2027',pic:'GUANG FU',upd:'2026-06-20 15:00:00'}
+    ];
+    let hpMode='all';
+    let focusTab='hp';
+    const ATTENTION_SOURCE=[];
+    function addDays(base,days){const d=new Date(base);d.setDate(d.getDate()+days);return d;}
+    function isoDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+    function dateTimeText(d){return `${isoDate(d)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:00`;}
+    function shortLaycan(start,end){
+      const s=new Date(start),e=new Date(end);
+      const mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      if(s.getFullYear()===e.getFullYear()&&s.getMonth()===e.getMonth()) return `${String(s.getDate()).padStart(2,'0')} / ${String(e.getDate()).padStart(2,'0')},${mons[e.getMonth()]},${e.getFullYear()}`;
+      return `${String(s.getDate()).padStart(2,'0')},${mons[s.getMonth()]} / ${String(e.getDate()).padStart(2,'0')},${mons[e.getMonth()]},${e.getFullYear()}`;
+    }
+    function makeAttentionRecord(cfg){
+      return {
+        seg:cfg.seg,name:cfg.name,status:cfg.status,sc:cfg.sc,client:cfg.client,market:cfg.market,
+        val:cfg.freightUSD==null?'':(cfg.freightUSD>=1000000?(cfg.freightUSD/1000000).toFixed(2)+'M USD':cfg.freightUSD.toLocaleString()+' USD'),
+        freightUSD:cfg.freightUSD,laycanStart:cfg.laycanStart,laycanEnd:cfg.laycanEnd,
+        win:shortLaycan(cfg.laycanStart,cfg.laycanEnd),pic:cfg.pic,updatedAt:cfg.updatedAt,upd:dateTimeText(new Date(cfg.updatedAt))
+      };
+    }
+    function buildAttentionSource(){
+      const now=new Date();
+      const currentMonth=new Date(now.getFullYear(),now.getMonth(),1);
+      const nextMonth=new Date(now.getFullYear(),now.getMonth()+1,1);
+      const next2Month=new Date(now.getFullYear(),now.getMonth()+2,1);
+      const d=(base,days)=>isoDate(addDays(base,days));
+      const dt=(days,h=10)=>{const x=addDays(now,days);x.setHours(h,0,0,0);return x.toISOString();};
+      const rows=[
+        // 异常货盘：Freight < 10,000 USD
+        {seg:'spot',name:'风电辅件小批量运输',status:'Open',sc:'open',client:'Vestas',market:'Wind',freightUSD:8500,laycanStart:d(now,22),laycanEnd:d(now,32),pic:'WANG LEI',updatedAt:dt(-3)},
+        {seg:'spot',name:'海工备件紧急运输',status:'Firm',sc:'firm',client:'Boskalis',market:'Offshore',freightUSD:6200,laycanStart:d(now,48),laycanEnd:d(now,58),pic:'吴丽萍',updatedAt:dt(-5)},
+        {seg:'proj',name:'项目货测试-低报价',status:'Budgetary',sc:'budgetary',client:'COSCO SHIPPING GROUP',market:'T & I',freightUSD:9800,laycanStart:d(now,75),laycanEnd:d(now,95),pic:'GUANG FU',updatedAt:dt(-7)},
+        // 过期货盘：Laycan 早于系统时间 60 天，同时 Last Updated 也早于系统时间 60 天
+        {seg:'spot',name:'历史导管架运输',status:'Open',sc:'open',client:'Equinor',market:'Offshore',freightUSD:1680000,laycanStart:d(now,-105),laycanEnd:d(now,-92),pic:'LINZHEN',updatedAt:dt(-88)},
+        {seg:'spot',name:'历史钢桩运输',status:'Fixed',sc:'fixed',client:'SBM',market:'Offshore',freightUSD:2150000,laycanStart:d(now,-82),laycanEnd:d(now,-70),pic:'GUANG FU',updatedAt:dt(-76)},
+        {seg:'proj',name:'历史项目货批次 A',status:'Proceed',sc:'proceed',client:'CHINA OCEAN SHIPPING',market:'Oil & Gas',freightUSD:null,laycanStart:d(now,-130),laycanEnd:d(now,-115),pic:'MU MIAN SONG',updatedAt:dt(-100)},
+        // 本月及下月发运货盘：Laycan 与当月、下月时间窗口有交集
+        {seg:'spot',name:'本月风机塔筒运输',status:'Firm',sc:'firm',client:'Siemens Gamesa',market:'Wind',freightUSD:2600000,laycanStart:isoDate(addDays(currentMonth,8)),laycanEnd:isoDate(addDays(currentMonth,20)),pic:'CHANG AN KOU',updatedAt:dt(-2)},
+        {seg:'spot',name:'本月 FPSO 模块运输',status:'Fixed',sc:'fixed',client:'Boskalis',market:'Offshore',freightUSD:3800000,laycanStart:isoDate(addDays(currentMonth,16)),laycanEnd:isoDate(addDays(nextMonth,4)),pic:'吴丽萍',updatedAt:dt(-1)},
+        {seg:'proj',name:'下月 Float-over Project',status:'Firm',sc:'firm',client:'TOTAL ENERGIES SE',market:'T & I',freightUSD:null,laycanStart:isoDate(addDays(nextMonth,5)),laycanEnd:isoDate(addDays(nextMonth,18)),pic:'WANG LEI',updatedAt:dt(-4)},
+        {seg:'proj',name:'下月 Multiple Voyage',status:'Budgetary',sc:'budgetary',client:'GUANGZHOU OCEAN',market:'Offshore',freightUSD:null,laycanStart:isoDate(addDays(nextMonth,12)),laycanEnd:isoDate(addDays(next2Month,-2)),pic:'GUANG FU',updatedAt:dt(-6)}
+      ];
+      ATTENTION_SOURCE.length=0;
+      rows.forEach(r=>ATTENTION_SOURCE.push(makeAttentionRecord(r)));
+    }
+    buildAttentionSource();
+    let ALERT_ITEMS={abnormal:[],expired:[],shipping:[]};
+    let ALERTS=[];
+    function refreshAttentionAlerts(){
+      const now=new Date();
+      const cutoff=new Date(now);cutoff.setDate(cutoff.getDate()-60);cutoff.setHours(23,59,59,999);
+      const windowStart=new Date(now.getFullYear(),now.getMonth(),1);
+      const windowEnd=new Date(now.getFullYear(),now.getMonth()+2,1);
+      ALERT_ITEMS={
+        abnormal:ATTENTION_SOURCE.filter(r=>Number.isFinite(r.freightUSD)&&r.freightUSD<10000).sort((a,b)=>a.freightUSD-b.freightUSD),
+        expired:ATTENTION_SOURCE.filter(r=>new Date(r.laycanStart)<cutoff&&new Date(r.updatedAt)<cutoff).sort((a,b)=>new Date(a.laycanStart)-new Date(b.laycanStart)),
+        shipping:ATTENTION_SOURCE.filter(r=>new Date(r.laycanEnd)>=windowStart&&new Date(r.laycanStart)<windowEnd).sort((a,b)=>new Date(a.laycanStart)-new Date(b.laycanStart))
+      };
+      ALERTS=[
+        {id:'hp',t:'High Priority',cnt:HP.length,kind:'high',filter:'Priority=High',view:'High Priority'},
+        {id:'abnormal',t:'异常货盘',cnt:ALERT_ITEMS.abnormal.length,red:true,filter:'Freight < 10,000 USD',view:'异常货盘'},
+        {id:'expired',t:'过期货盘',cnt:ALERT_ITEMS.expired.length,red:false,filter:'Laycan < 系统时间-60天 且 Last Updated < 系统时间-60天',view:'过期货盘'},
+        {id:'shipping',t:'本月及下月发运货盘',cnt:ALERT_ITEMS.shipping.length,red:false,filter:'Laycan 在当月及下月',view:'本月及下月发运货盘'}
+      ];
+    }
+    refreshAttentionAlerts();
+
+    function statusClass(sc){ return 'bdg-' + sc; }
+    function segmentTag(seg){ return seg==='spot' ? '<span class="seg-tag spot">现货</span>' : '<span class="seg-tag proj">项目货</span>'; }
+    function viewRecord(seg,name){ jump(seg==='spot'?'Spot Cargo':'Project Cargo','—','查看：'+name); }
+    function getHpRows(){ return HP.filter(r=>hpMode==='all'||r.seg===hpMode); }
+    function renderHP(){
+      const rows=getHpRows();
+      const showRows=pageRows(rows,'hp');
+      const tb=document.getElementById('hpBody');
+      document.getElementById('hpAll').textContent=HP.length;
+      document.getElementById('hpCntAll').textContent=HP.length;
+      document.getElementById('hpCntSpot').textContent=HP.filter(r=>r.seg==='spot').length;
+      document.getElementById('hpCntProj').textContent=HP.filter(r=>r.seg==='proj').length;
+      if(!showRows.length){
+        tb.innerHTML='<tr><td colspan="10" class="hp-empty">暂无 High 优先级记录</td></tr>';
+      }else{
+        tb.innerHTML=showRows.map((r,i)=>`<tr onclick="viewRecord('${r.seg}','${r.name.replace(/'/g,"\'")}')">
+          <td>${(pagerState.hp-1)*PAGE_SIZE + i + 1}</td>
+          <td>${segmentTag(r.seg)}</td>
+          <td><span class="hp-name">${r.name}</span></td>
+          <td><span class="badge ${statusClass(r.sc)}">${r.status}</span></td>
+          <td>${r.client}</td>
+          <td>${r.market}</td>
+          <td class="focus-freight">${r.val||'<span style="color:#c8d6e5;font-weight:400">—</span>'}</td>
+          <td>${r.win}</td>
+          <td>${r.pic}</td>
+          <td style="color:#9ab0c6">${r.upd}</td>
+        </tr>`).join('');
+      }
+      renderPager('hpPager','hp',rows.length);
+    }
+    function setHp(btn,mode){
+      hpMode=mode;
+      pagerState.hp=1;
+      [...document.querySelectorAll('#hpFilter button')].forEach(b=>b.classList.remove('on'));
+      btn.classList.add('on');
+      renderHP();
+    }
+    function alertIcon(id){
+      if(id==='hp') return '<svg viewBox="0 0 24 24"><path d="M8.5 4h7l-1.2 5.2 2.7 2.7v1.6H7v-1.6l2.7-2.7L8.5 4Z"/><path d="M12 13.5V21"/></svg>';
+      if(id==='abnormal') return '<svg viewBox="0 0 24 24"><path d="M12 3 2.8 20h18.4L12 3Z"/><path d="M12 9v5M12 17.2h.01"/></svg>';
+      if(id==='expired') return '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg>';
+      return '<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="m9 15 2 2 4-4"/></svg>';
+    }
+    function getAlertItemsById(id){
+      return id==='hp' ? HP : (ALERT_ITEMS[id]||[]);
+    }
+    function getAlertCardCount(id){
+      const rows=getAlertItemsById(id);
+      if(id!==alertActive||alertSegMode==='all') return rows.length;
+      return rows.filter(r=>r.seg===alertSegMode).length;
+    }
+    function renderAlerts(){
+      refreshAttentionAlerts();
+      const alertCntEl=document.getElementById('alertCnt');
+      if(alertCntEl) alertCntEl.textContent=ALERTS.filter(a=>a.id!=='hp').reduce((sum,a)=>sum+getAlertCardCount(a.id),0);
+      if(!ALERTS.some(a=>a.id===alertActive)) alertActive='hp';
+      document.getElementById('alertCards').innerHTML=ALERTS.map(a=>`
+        <div class="alert-item${a.kind==='high'?' high':''}${a.red?' red':''}${a.id===alertActive?' on':''}" data-alert-id="${a.id}">
+          <div class="alert-ic ${a.kind==='high'?'blue':(a.red?'red':'amber')}">${alertIcon(a.id)}</div>
+          <div class="alert-tx"><div class="t">${a.t}</div></div>
+          <div class="alert-cnt ${a.kind==='high'?'blue':(a.red?'red':'')}">${getAlertCardCount(a.id)}</div><span class="alert-arrow">›</span>
+        </div>`).join('');
+      document.querySelectorAll('#alertCards .alert-item').forEach(card=>card.addEventListener('click',()=>setAlertFilter(card.dataset.alertId,card)));
+      renderAlertDetail();
+    }
+    function getAlertRows(){
+      const allItems=getAlertItemsById(alertActive);
+      return allItems.filter(r=>alertSegMode==='all'||r.seg===alertSegMode);
+    }
+    function renderAlertDetail(){
+      const allItems=alertActive==='hp' ? HP : (ALERT_ITEMS[alertActive]||[]);
+      const items=getAlertRows();
+      const showRows=pageRows(items,'alert');
+      const tb=document.getElementById('alertDetailBody');
+      document.getElementById('alertCntAll').textContent=allItems.length;
+      document.getElementById('alertCntSpot').textContent=allItems.filter(r=>r.seg==='spot').length;
+      document.getElementById('alertCntProj').textContent=allItems.filter(r=>r.seg==='proj').length;
+      if(!showRows.length){
+        tb.innerHTML='<tr><td colspan="10" class="hp-empty">暂无记录</td></tr>';
+      }else{
+        tb.innerHTML=showRows.map((r,i)=>`<tr onclick="viewRecord('${r.seg}','${r.name.replace(/'/g,"\'")}')">
+          <td>${(pagerState.alert-1)*PAGE_SIZE + i + 1}</td>
+          <td>${segmentTag(r.seg)}</td>
+          <td><span class="hp-name">${r.name}</span></td>
+          <td><span class="badge ${statusClass(r.sc)}">${r.status}</span></td>
+          <td>${r.client}</td>
+          <td>${r.market}</td>
+          <td class="focus-freight">${r.val||'<span style="color:#c8d6e5;font-weight:400">—</span>'}</td>
+          <td>${r.win}</td>
+          <td>${r.pic}</td>
+          <td style="color:#9ab0c6">${r.upd}</td>
+        </tr>`).join('');
+      }
+      renderPager('alertPager','alert',items.length);
+    }
+    function setAlertFilter(id,el){
+      alertActive=id;
+      alertSegMode='all';
+      pagerState.alert=1;
+      document.querySelectorAll('#alertCards .alert-item').forEach(c=>c.classList.remove('on'));
+      el.classList.add('on');
+      [...document.querySelectorAll('#alertSegFilter button')].forEach((b,i)=>b.classList.toggle('on',i===0));
+      renderAlerts();
+    }
+    function setAlertSeg(btn,mode){
+      alertSegMode=mode;
+      pagerState.alert=1;
+      [...document.querySelectorAll('#alertSegFilter button')].forEach(b=>b.classList.remove('on'));
+      btn.classList.add('on');
+      renderAlerts();
+    }
+    renderAlerts();
+
+    const CURRENT_USER='吴丽萍';
+    const MY_SPOT_CARGO=[
+      {priority:'High',pid:'S2606280001',status:'Firm',sc:'firm',charterer:'Century Wind Power',freight:'5.32M USD',cargoType:'Offshore Wind Foundation',laycan:'15,Nov / 15,Dec,2026',vessel:'DA XIN',pol:'Nantong',pod:'Taichung',pic:'吴丽萍',creator:'吴丽萍',updated:'2026-06-28',pinned:true,dashboardVessel:'TAI AN KOU'},
+      {priority:'High',pid:'S2606270001',status:'Open',sc:'open',charterer:'Siemens Gamesa',freight:'2.60M USD',cargoType:'Wind Tower',laycan:'01 / 30,Dec,2026',vessel:'TBN',pol:'Nantong',pod:'Esbjerg',pic:'CHANG AN KOU',creator:'吴丽萍',updated:'2026-06-27',dashboardVessel:'XIANG HE KOU'},
+      {priority:'High',pid:'S2606260001',status:'Firm',sc:'firm',charterer:'TotalEnergies',freight:'4.15M USD',cargoType:'Jacket',laycan:'05 / 25,Oct,2026',vessel:'DA DE',pol:'Nantong',pod:'Batam',pic:'GUANG FU',creator:'吴丽萍',updated:'2026-06-26',dashboardVessel:'HUA HAILONG'},
+      {priority:'High',pid:'S2606300001',status:'Open',sc:'open',charterer:'Vestas',freight:'2.05M USD',cargoType:'Nacelle',laycan:'10 / 28,Oct,2026',vessel:'TBN',pol:'Nantong',pod:'Aarhus',pic:'WANG LEI',creator:'LINZHEN',updated:'2026-06-30',pinned:true,dashboardVessel:'XIANG YUN KOU'},
+      {priority:'Normal',pid:'S2606290001',status:'Fixed',sc:'fixed',charterer:'Boskalis',freight:'3.80M USD',cargoType:'FPSO Module',laycan:'01 / 20,Sep,2026',vessel:'XIN GUANG HUA',pol:'Shanghai',pod:'Singapore',pic:'吴丽萍',creator:'LINZHEN',updated:'2026-06-29',pinned:true,dashboardVessel:'XIN GUANG HUA'},
+      {priority:'Normal',pid:'S2606240001',status:'Open',sc:'open',charterer:'GE Renewable Energy',freight:'1.90M USD',cargoType:'Blade',laycan:'10 / 28,Aug,2026',vessel:'TBN',pol:'Shanghai',pod:'Houston',pic:'吴丽萍',creator:'MU MIAN SONG',updated:'2026-06-24',dashboardVessel:'KANG SHENG KOU'},
+      {priority:'Normal',pid:'S2606200001',status:'Booked',sc:'booked',charterer:'CNOOC',freight:'2.25M USD',cargoType:'Steel Structure',laycan:'18 / 28,Jul,2026',vessel:'DA QIANG',pol:'Shanghai',pod:'Zhuhai',pic:'吴丽萍',creator:'GUANG FU',updated:'2026-06-20',dashboardVessel:'HUA RUI LONG'},
+      {priority:'Normal',pid:'S2606180001',status:'Open',sc:'open',charterer:'Shell',freight:'1.45M USD',cargoType:'Rig Equipment',laycan:'01 / 18,Aug,2026',vessel:'TBN',pol:'Dalian',pod:'Miri',pic:'吴丽萍',creator:'吴丽萍',updated:'2026-06-18',dashboardVessel:'XIANG TAI KOU'},
+      {priority:'High',pid:'S2606170003',status:'Firm',sc:'firm',charterer:'Mingyang Smart Energy',freight:'3.25M USD',cargoType:'Offshore Wind Foundation',laycan:'18 / 30,Sep,2026',vessel:'HUA XING LONG',pol:'Nantong',pod:'Eemshaven',pic:'吴丽萍',creator:'WANG LEI',updated:'2026-06-17',dashboardVessel:'HUA XING LONG'},
+      {priority:'Normal',pid:'S2606160005',status:'Open',sc:'open',charterer:'Vard Offshore',freight:'1.78M USD',cargoType:'Wind Tower',laycan:'08 / 22,Aug,2026',vessel:'TBN',pol:'Nantong',pod:'Busan',pic:'吴丽萍',creator:'吴丽萍',updated:'2026-06-16',dashboardVessel:'HUA SHENG LONG'},
+      {priority:'Normal',pid:'S2606150002',status:'Fixed',sc:'fixed',charterer:'Petrofac',freight:'2.95M USD',cargoType:'Jacket',laycan:'02 / 18,Sep,2026',vessel:'ZHI YUAN KOU',pol:'Shanghai',pod:'Abu Dhabi',pic:'GUANG FU',creator:'吴丽萍',updated:'2026-06-15',dashboardVessel:'ZHI YUAN KOU'},
+      {priority:'High',pid:'S2606140008',status:'Open',sc:'open',charterer:'CNOOC Energy',freight:'2.18M USD',cargoType:'Pipe Rack',laycan:'12 / 26,Aug,2026',vessel:'TBN',pol:'Qingdao',pod:'Labuan',pic:'吴丽萍',creator:'MU MIAN SONG',updated:'2026-06-14',dashboardVessel:'XIANG AN KOU'},
+      {priority:'Normal',pid:'S2606130006',status:'Booked',sc:'booked',charterer:'Haitong Offshore',freight:'1.66M USD',cargoType:'Blade',laycan:'05 / 16,Jul,2026',vessel:'DA QIANG',pol:'Qingdao',pod:'Batam',pic:'WANG LEI',creator:'吴丽萍',updated:'2026-06-13',dashboardVessel:'DA QIANG'},
+      {priority:'Normal',pid:'S2606120009',status:'Open',sc:'open',charterer:'Envision Energy',freight:'1.52M USD',cargoType:'Blade',laycan:'03 / 19,Aug,2026',vessel:'TBN',pol:'Lianyungang',pod:'Kiel',pic:'吴丽萍',creator:'TIAN XI',updated:'2026-06-12',dashboardVessel:'RED ZED I'},
+      {priority:'Normal',pid:'S2606110004',status:'Firm',sc:'firm',charterer:'COSCO SHIPPING Heavy',freight:'2.42M USD',cargoType:'Offshore Wind Foundation',laycan:'15 / 28,Sep,2026',vessel:'XIANG RUI KOU',pol:'Tianjin',pod:'Aalborg',pic:'吴丽萍',creator:'LINZHEN',updated:'2026-06-11',dashboardVessel:'XIANG RUI KOU'}
+    ];
+    const MY_PROJECT_CARGO=[
+      {priority:'High',pid:'P2605220001',projectPid:'S2608140012',status:'Firm',sc:'firm',charterer:'Offshore Heavy Transport',freight:'—',cargoType:'Voyage',laycan:'Oct 2026 – Dec 2026',projectPeriod:'Oct 2026 – Dec 2026',projectMarket:'Decommissioning',projectName:'Jack-up Rig Move',endClient:'MODEC',directClient:'Offshore Heavy Transport',vessel:'—',pol:'—',pod:'—',pic:'WANG LEI',creator:'TIAN XI',updated:'2026-06-30',updatedDisplay:'2026-06-30 13:40:00',pinned:true,dashboardPol:'Shanghai',market:'Offshore',dashboardVessel:'HUA XING LONG'},
+      {priority:'High',pid:'P2608070001',projectPid:'P2607300001',status:'Firm',sc:'firm',charterer:'Boskalis',freight:'—',cargoType:'Float-over',laycan:'Jul 2026 – Sep 2026',projectPeriod:'Jul 2026 – Sep 2026',projectMarket:'T & I',projectName:'FPSO Module Transport',endClient:'TOTAL ENERGIES SE',directClient:'Boskalis',vessel:'—',pol:'—',pod:'—',pic:'吴丽萍',creator:'WANG LEI',updated:'2026-06-29',updatedDisplay:'2026-06-29 10:20:00',pinned:true,dashboardPol:'Shanghai',market:'Wind',dashboardVessel:'XIANG RUI KOU'},
+      {priority:'High',pid:'S2607280006',projectPid:'P2608070018',status:'Proceed',sc:'proceed',charterer:'GUANGZHOU OCEAN',freight:'—',cargoType:'Voyage',laycan:'Aug 2026 – Oct 2026',projectPeriod:'Aug 2026 – Oct 2026',projectMarket:'Offshore',projectName:'Offshore Platform Move',endClient:'CNOOC',directClient:'GUANGZHOU OCEAN',vessel:'—',pol:'—',pod:'—',pic:'MU MIAN SONG',creator:'吴丽萍',updated:'2026-06-27',updatedDisplay:'2026-06-27 14:35:00',dashboardPol:'Shanghai',market:'Oil & Gas',dashboardVessel:'ZHI YUAN KOU'},
+      {priority:'High',pid:'P2607220002',projectPid:'S2607300009',status:'Budgetary',sc:'budgetary',charterer:'COSCO SHIPPING GROUP',freight:'—',cargoType:'Multiple Voy',laycan:'Sep 2026 – Jan 2027',projectPeriod:'Sep 2026 – Jan 2027',projectMarket:'Wind',projectName:'Wind Farm T&I',endClient:'Equinor',directClient:'COSCO SHIPPING GROUP',vessel:'—',pol:'—',pod:'—',pic:'吴丽萍',creator:'吴丽萍',updated:'2026-06-24',updatedDisplay:'2026-06-24 16:12:00',dashboardPol:'Shanghai',market:'Oil & Gas',dashboardVessel:'XIN YAO HUA'},
+      {priority:'Normal',pid:'P2607080001',projectPid:'P2608070016',status:'Proceed',sc:'proceed',charterer:'CHINA OCEAN SHIPPING',freight:'—',cargoType:'Time',laycan:'May 2026 – May 2027',projectPeriod:'May 2026 – May 2027',projectMarket:'Oil & Gas',projectName:'Long-term COA Frame',endClient:'Shell',directClient:'CHINA OCEAN SHIPPING',vessel:'—',pol:'—',pod:'—',pic:'吴丽萍',creator:'GUANG FU',updated:'2026-06-30',updatedDisplay:'2026-06-30 09:05:00',pinned:true,dashboardPol:'Qingdao',market:'Wind',dashboardVessel:'HUA YANG LONG'},
+      {priority:'Normal',pid:'S2607290015',projectPid:'P2608070010',status:'Budgetary',sc:'budgetary',charterer:'GUANGZHOU OCEAN',freight:'—',cargoType:'Float-over',laycan:'May 2026 – Jul 2026',projectPeriod:'May 2026 – Jul 2026',projectMarket:'Offshore',projectName:'重吊货盘测试',endClient:'Petrobras',directClient:'GUANGZHOU OCEAN',vessel:'—',pol:'—',pod:'—',pic:'GUANG FU',creator:'吴丽萍',updated:'2026-06-26',updatedDisplay:'2026-06-26 10:49:00',dashboardPol:'Qingdao',market:'Wind',dashboardVessel:'XIANG TAI KOU'},
+      {priority:'Normal',pid:'S2607290004',projectPid:'P2608070004',status:'Budgetary',sc:'budgetary',charterer:'COSCO SHIPPING GROUP',freight:'—',cargoType:'Multiple Voy',laycan:'May 2026 – May 2026',projectPeriod:'May 2026 – May 2026',projectMarket:'Oil & Gas',projectName:'2个批次货盘',endClient:'CNPC',directClient:'COSCO SHIPPING GROUP',vessel:'—',pol:'—',pod:'—',pic:'吴丽萍',creator:'TIAN XI',updated:'2026-06-21',updatedDisplay:'2026-06-21 15:08:00',dashboardPol:'Qingdao',market:'Offshore',dashboardVessel:'TAI AN KOU'},
+      {priority:'Normal',pid:'260013GS',projectPid:'P2608050001',status:'Proceed',sc:'proceed',charterer:'CHINA OCEAN SHIPPING',freight:'—',cargoType:'Time',laycan:'May 2026 – May 2027',projectPeriod:'May 2026 – May 2027',projectMarket:'T & I',projectName:'测试COA货盘0506',endClient:'CNOOC',directClient:'CHINA OCEAN SHIPPING',vessel:'—',pol:'—',pod:'—',pic:'MU MIAN SONG',creator:'吴丽萍',updated:'2026-06-20',updatedDisplay:'2026-06-20 15:22:00',dashboardPol:'Lianyungang',market:'Wind',dashboardVessel:'XIN GUANG HUA'},
+      {priority:'High',pid:'P2606190003',projectPid:'P2608210007',status:'Proceed',sc:'proceed',charterer:'Cadeler',freight:'—',cargoType:'T & I',laycan:'Nov 2026 – Feb 2027',projectPeriod:'Nov 2026 – Feb 2027',projectMarket:'Wind',projectName:'Offshore Turbine Installation',endClient:'Vestas',directClient:'Cadeler',vessel:'—',pol:'—',pod:'—',pic:'吴丽萍',creator:'吴丽萍',updated:'2026-06-19',updatedDisplay:'2026-06-19 11:40:00',dashboardPol:'Taicang',market:'Wind',dashboardVessel:'HUA SHENG LONG'},
+      {priority:'Normal',pid:'P2606180004',projectPid:'P2608200012',status:'Budgetary',sc:'budgetary',charterer:'Boskalis',freight:'—',cargoType:'Float-over',laycan:'Oct 2026 – Dec 2026',projectPeriod:'Oct 2026 – Dec 2026',projectMarket:'Offshore',projectName:'Jacket Tow-Out Campaign',endClient:'Petronas',directClient:'Boskalis',vessel:'—',pol:'—',pod:'—',pic:'GUANG FU',creator:'吴丽萍',updated:'2026-06-18',updatedDisplay:'2026-06-18 17:05:00',dashboardPol:'Taicang',market:'Offshore',dashboardVessel:'TAI AN KOU'},
+      {priority:'Normal',pid:'P2606170005',projectPid:'P2608180008',status:'Proceed',sc:'proceed',charterer:'OHT',freight:'—',cargoType:'Voyage',laycan:'Sep 2026 – Nov 2026',projectPeriod:'Sep 2026 – Nov 2026',projectMarket:'Decommissioning',projectName:'Module Relocation Program',endClient:'Chevron',directClient:'OHT',vessel:'—',pol:'—',pod:'—',pic:'吴丽萍',creator:'TIAN XI',updated:'2026-06-17',updatedDisplay:'2026-06-17 09:28:00',dashboardPol:'Taicang',market:'Offshore',dashboardVessel:'HUA YANG LONG'},
+      {priority:'High',pid:'P2606160006',projectPid:'P2608160006',status:'Firm',sc:'firm',charterer:'COSCO SHIPPING Heavy',freight:'—',cargoType:'Multiple Voy',laycan:'Aug 2026 – Dec 2026',projectPeriod:'Aug 2026 – Dec 2026',projectMarket:'Oil & Gas',projectName:'Refinery Module Campaign',endClient:'Sinopec',directClient:'COSCO SHIPPING Heavy',vessel:'—',pol:'—',pod:'—',pic:'吴丽萍',creator:'LINZHEN',updated:'2026-06-16',updatedDisplay:'2026-06-16 18:16:00',dashboardPol:'Yantai',market:'Oil & Gas',dashboardVessel:'XIANG HE KOU'},
+      {priority:'Normal',pid:'P2606150009',projectPid:'P2608150010',status:'Budgetary',sc:'budgetary',charterer:'Blue Water',freight:'—',cargoType:'Time',laycan:'Jul 2026 – Oct 2026',projectPeriod:'Jul 2026 – Oct 2026',projectMarket:'T & I',projectName:'Substation Delivery Plan',endClient:'RWE',directClient:'Blue Water',vessel:'—',pol:'—',pod:'—',pic:'WANG LEI',creator:'吴丽萍',updated:'2026-06-15',updatedDisplay:'2026-06-15 14:42:00',dashboardPol:'Yantai',market:'Wind',dashboardVessel:'XIN YAO HUA'},
+      {priority:'Normal',pid:'P2606140011',projectPid:'P2608140011',status:'Proceed',sc:'proceed',charterer:'CHINA OCEAN SHIPPING',freight:'—',cargoType:'Voyage',laycan:'Aug 2026 – Sep 2026',projectPeriod:'Aug 2026 – Sep 2026',projectMarket:'Wind',projectName:'Blade Shuttle Service',endClient:'Goldwind',directClient:'CHINA OCEAN SHIPPING',vessel:'—',pol:'—',pod:'—',pic:'吴丽萍',creator:'MU MIAN SONG',updated:'2026-06-14',updatedDisplay:'2026-06-14 12:06:00',dashboardPol:'Qingdao',market:'Wind',dashboardVessel:'XIANG TAI KOU'},
+      {priority:'High',pid:'P2606130012',projectPid:'P2608130005',status:'Proceed',sc:'proceed',charterer:'Swire Projects',freight:'—',cargoType:'Voyage',laycan:'Jun 2026 – Aug 2026',projectPeriod:'Jun 2026 – Aug 2026',projectMarket:'Offshore',projectName:'Pipe Spool Charter',endClient:'TechnipFMC',directClient:'Swire Projects',vessel:'—',pol:'—',pod:'—',pic:'吴丽萍',creator:'GUANG FU',updated:'2026-06-13',updatedDisplay:'2026-06-13 16:30:00',dashboardPol:'Lianyungang',market:'Offshore',dashboardVessel:'HUA RUI LONG'}
+    ];
+    let myCargoSegment='spot';
+    const myCargoMode={spot:'all',proj:'all'};
+    let followDashboardExpanded=false;
+    const followDashboardToggle=document.getElementById('followDashboardToggle');
+    const followDashboardToggleText=document.getElementById('followDashboardToggleText');
+    const followDashboardBody=document.getElementById('followDashboardBody');
+    const followChartRefs={status:null,polMap:null,vesselBar:null};
+    const FOLLOW_COLORS=['#B4CCE9','#88AEDC','#5E8FCB','#3E6EAE','#9AA8B8','#7BA3D4','#A8C5E8'];
+    const FOLLOW_STATUS_COLORS=['#4a78b8','#6092cc','#80a9da','#a7c3e6','#6f86a5','#8bb7c5','#b5c8db','#d1dce8'];
+    const FOLLOW_POL_META={
+      'Shanghai':{country:'China',lon:121.47,lat:31.23},'Ningbo':{country:'China',lon:121.55,lat:29.88},'Tianjin':{country:'China',lon:117.20,lat:39.12},
+      'Dalian':{country:'China',lon:121.62,lat:38.92},'Yantai':{country:'China',lon:121.39,lat:37.52},'Qingdao':{country:'China',lon:120.38,lat:36.07},
+      'Lianyungang':{country:'China',lon:119.22,lat:34.60},'Nantong':{country:'China',lon:120.89,lat:31.98},'Taicang':{country:'China',lon:121.10,lat:31.45},
+      'Singapore':{country:'Singapore',lon:103.82,lat:1.35},'Busan':{country:'South Korea',lon:129.04,lat:35.10}
+    };
+    const FOLLOW_PROJECT_POL_DISTRIBUTION={
+      'P2605220001':'Shanghai',
+      'P2608070001':'Shanghai',
+      'S2607280006':'Shanghai',
+      'P2607220002':'Shanghai',
+      'P2607080001':'Qingdao',
+      'S2607290015':'Qingdao',
+      'S2607290004':'Qingdao',
+      '260013GS':'Lianyungang',
+      'P2606190003':'Taicang',
+      'P2606180004':'Taicang',
+      'P2606170005':'Taicang',
+      'P2606160006':'Yantai',
+      'P2606150009':'Yantai',
+      'P2606140011':'Qingdao',
+      'P2606130012':'Lianyungang'
+    };
+    let followPolMetric='count';
+    let followPolZoom=null;
+    let followVesselMode='type';
+    let followVesselDrillType=null;
+    const followPieTip=document.getElementById('followPieTip');
+    const followPolHost=document.getElementById('followPolChart');
+    const followVesselHost=document.getElementById('followVesselChart');
+
+    function getProjectRows(){
+      const source=myCargoSegment==='spot'?MY_SPOT_CARGO:MY_PROJECT_CARGO;
+      return sortCargoRows(filterMineRows(source,myCargoMode[myCargoSegment]||'all'));
+    }
+    function isMineOrPinned(r){return r.creator===CURRENT_USER||r.pic===CURRENT_USER||r.pinned;}
+    function filterMineRows(rows,mode){
+      return rows.filter(r=>{
+        if(mode==='pinned') return r.pinned;
+        if(mode==='creator') return r.creator===CURRENT_USER;
+        if(mode==='pic') return r.pic===CURRENT_USER;
+        return isMineOrPinned(r);
+      });
+    }
+    function sortCargoRows(rows){
+      return [...rows].sort((a,b)=>{
+        const pa=a.priority==='High'?0:1;
+        const pb=b.priority==='High'?0:1;
+        if(pa!==pb) return pa-pb;
+        return new Date((b.updated||'').replace(' ','T'))-new Date((a.updated||'').replace(' ','T'));
+      });
+    }
+    function updateMineCounts(prefix,rows){
+      const refs={
+        all:document.getElementById(prefix+'MineAll'),
+        pinned:document.getElementById(prefix+'MinePinned'),
+        creator:document.getElementById(prefix+'MineCreator'),
+        pic:document.getElementById(prefix+'MinePic')
+      };
+      if(refs.all) refs.all.textContent=rows.filter(isMineOrPinned).length;
+      if(refs.pinned) refs.pinned.textContent=rows.filter(r=>r.pinned).length;
+      if(refs.creator) refs.creator.textContent=rows.filter(r=>r.creator===CURRENT_USER).length;
+      if(refs.pic) refs.pic.textContent=rows.filter(r=>r.pic===CURRENT_USER).length;
+    }
+    function setMyCargoFilter(seg,btn,mode){
+      myCargoMode[myCargoSegment]=mode;
+      pagerState.project=1;
+      document.querySelectorAll('#spotCargoFilter button').forEach(b=>b.classList.remove('on'));
+      if(btn) btn.classList.add('on');
+      renderMySpotCargo();
+    }
+    function setFollowSegment(btn,seg){
+      myCargoSegment=seg;
+      pagerState.project=1;
+      document.querySelectorAll('#followSegmentTabs .follow-segment-tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      myCargoMode[seg]='all';
+      document.querySelectorAll('#spotCargoFilter button').forEach((b,i)=>b.classList.toggle('on',i===0));
+      followVesselMode='type';
+      followVesselDrillType=null;
+      followPolZoom=null;
+      renderMySpotCargo();
+    }
+    function aggregate(rows,getKey){
+      const m=new Map();
+      rows.forEach(r=>{const k=getKey(r)||'未指定';m.set(k,(m.get(k)||0)+1);});
+      return [...m.entries()].map(([name,value],idx)=>({name,value,idx})).sort((a,b)=>b.value-a.value);
+    }
+    function ensureFollowCharts(){
+      if(typeof echarts==='undefined') return false;
+      ensurePolShell();
+      ensureVesselShell();
+      if(!followChartRefs.polMap) followChartRefs.polMap=echarts.init(document.getElementById('followPolMapCanvas'));
+      if(!followChartRefs.vesselBar) followChartRefs.vesselBar=echarts.init(document.getElementById('followVesselBarInner'));
+      return true;
+    }
+    function donutOption(data,total){
+      return {
+        color:FOLLOW_STATUS_COLORS,
+        tooltip:{trigger:'item',formatter:p=>`${p.name}<br/>${p.value} 个（${p.percent}%）`},
+        legend:{orient:'vertical',right:6,top:'middle',itemWidth:10,itemHeight:10,itemGap:8,textStyle:{fontSize:11,color:'#4c6b8b'},formatter:name=>{const it=data.find(x=>x.name===name);return `${name}   ${it?it.value:0}`;}},
+        series:[{type:'pie',radius:['38%','61%'],center:['29%','52%'],avoidLabelOverlap:true,label:{show:false},labelLine:{show:false},data:data}],
+        graphic:[
+          {type:'text',left:'26.5%',top:'45%',style:{text:String(total),fill:'#1f3f62',font:'700 22px PingFang SC, Microsoft YaHei, sans-serif',textAlign:'center'}},
+          {type:'text',left:'26.5%',top:'56%',style:{text:'货盘',fill:'#8fa2b6',font:'11px PingFang SC, Microsoft YaHei, sans-serif',textAlign:'center'}}
+        ]
+      };
+    }
+    function showFollowPieTip(evt,title,val,pct){
+      if(!followPieTip) return;
+      followPieTip.innerHTML=`<span class="t">${title}</span><br><span class="n">${val}</span> · ${pct}%`;
+      followPieTip.style.left=(evt.clientX+12)+'px';
+      followPieTip.style.top=(evt.clientY-10)+'px';
+      followPieTip.classList.add('show');
+    }
+    function hideFollowPieTip(){ if(followPieTip) followPieTip.classList.remove('show'); }
+    function pieSegAt(data,total,x,y,rOut,rIn){
+      const d=Math.hypot(x,y);
+      if(d<rIn||d>rOut) return null;
+      const ang=(Math.atan2(x,-y)*180/Math.PI+360)%360;
+      let acc=0;
+      for(const seg of data){
+        const span=total?seg.value/total*360:0;
+        if(ang>=acc&&ang<acc+span) return seg;
+        acc+=span;
+      }
+      return data[data.length-1]||null;
+    }
+    function bindFollowPieHover(el,data,rOut=59,rIn=28){
+      const total=data.reduce((s,d)=>s+d.value,0);
+      el.onmousemove=e=>{
+        const rect=el.getBoundingClientRect();
+        const x=e.clientX-rect.left-rect.width/2;
+        const y=e.clientY-rect.top-rect.height/2;
+        const seg=pieSegAt(data,total,x,y,rOut,rIn);
+        if(seg){
+          const pct=total?Math.round(seg.value/total*100):0;
+          showFollowPieTip(e,seg.name,seg.value,pct);
+        }else hideFollowPieTip();
+      };
+      el.onmouseleave=hideFollowPieTip;
+    }
+    function renderFollowTypePanel(rows){
+      const el=document.getElementById('followTypeChart');
+      const data=aggregate(rows,r=>r.cargoType);
+      const total=data.reduce((s,d)=>s+d.value,0);
+      let pct=0;
+      const grad=[];
+      data.forEach((d,i)=>{
+        d.color=FOLLOW_COLORS[i%FOLLOW_COLORS.length];
+        const share=total?d.value/total*100:0;
+        grad.push(`${d.color} ${pct}% ${pct+share}%`);
+        pct+=share;
+      });
+      const legend=data.map(d=>{
+        const share=total?Math.round(d.value/total*100):0;
+        return `<div class="fd-pie-leg-row" data-key="${d.name}" data-val="${d.value}" data-pct="${share}">
+          <span class="fd-pie-dot" style="background:${d.color}"></span>
+          <span class="fd-pie-leg-lbl">${d.name}</span>
+          <span class="fd-pie-leg-val">${d.value}</span>
+          <span class="fd-pie-leg-pct">${share}%</span>
+        </div>`;
+      }).join('');
+      el.innerHTML=`<div class="fd-pie-panel"><div class="fd-pie-left">
+        <div class="fd-pie-chart" style="background:conic-gradient(${grad.join(',')||'#edf2f7 0 100%'})"><div class="fd-pie-center"><span class="fd-pie-total">${total}</span></div></div>
+        <div class="fd-pie-legend">${legend}</div>
+      </div></div>`;
+      const chartEl=el.querySelector('.fd-pie-chart');
+      if(chartEl) bindFollowPieHover(chartEl,data);
+      el.querySelectorAll('.fd-pie-leg-row').forEach(row=>{
+        row.addEventListener('mousemove',ev=>showFollowPieTip(ev,row.dataset.key,row.dataset.val,row.dataset.pct));
+        row.addEventListener('mouseleave',hideFollowPieTip);
+      });
+    }
+    function renderFollowStatusPanel(rows){
+      const el=document.getElementById('followStatusChart');
+      const statusColors={Open:'#B4CCE9',Budgetary:'#B4CCE9',Firm:'#88AEDC',Fixed:'#5E8FCB',Proceed:'#5E8FCB',Booked:'#3E6EAE',Closed:'#9AA8B8',Lost:'#C98D86'};
+      const data=aggregate(rows,r=>r.status).map((d,i)=>({...d,color:statusColors[d.name]||FOLLOW_COLORS[i%FOLLOW_COLORS.length]}));
+      const total=data.reduce((s,d)=>s+d.value,0);
+      let grad=[],pct=0;
+      data.forEach(d=>{
+        const share=total?d.value/total*100:0;
+        grad.push(`${d.color} ${pct}% ${pct+share}%`);
+        pct+=share;
+      });
+      const target=myCargoSegment==='spot'?'Spot Cargo':'Project Cargo';
+      const field=myCargoSegment==='spot'?'Status':'Project Status';
+      const legend=data.map(d=>{
+        const share=total?Math.round(d.value/total*100):0;
+        return `<div class="fs-pie-leg-row" data-key="${d.name}" data-val="${d.value}" data-pct="${share}">
+          <span class="fs-pie-dot" style="background:${d.color}"></span>
+          <span class="fs-pie-leg-lbl">${d.name}</span>
+          <span class="fs-pie-leg-val">${d.value}</span>
+          <span class="fs-pie-leg-pct">${share}%</span>
+        </div>`;
+      }).join('');
+      el.innerHTML=`<div class="fs-pie-panel"><div class="fs-pie-left">
+        <div class="fs-pie-chart" style="background:conic-gradient(${grad.join(',')||'#edf2f7 0 100%'})"><div class="fs-pie-center"><span class="fs-pie-total">${total}</span></div></div>
+        <div class="fs-pie-legend">${legend}</div>
+      </div></div>`;
+      const chartEl=el.querySelector('.fs-pie-chart');
+      if(chartEl) bindFollowPieHover(chartEl,data,48,23);
+      el.querySelectorAll('.fs-pie-leg-row').forEach(row=>{
+        row.addEventListener('mousemove',ev=>showFollowPieTip(ev,row.dataset.key,row.dataset.val,row.dataset.pct));
+        row.addEventListener('mouseleave',hideFollowPieTip);
+      });
+    }
+    function ensurePolShell(){
+      if(document.getElementById('followPolMapCanvas')) return;
+      followPolHost.innerHTML=`<div class="follow-pol-wrap">
+        <div class="follow-pol-toolbar">
+          <div class="follow-pol-legend" aria-label="热度图例"><span>Low</span><span class="follow-pol-gradient"></span><span>High</span></div>
+        </div>
+        <div class="follow-pol-content">
+          <div class="follow-pol-map">
+            <svg class="follow-pol-bg" viewBox="0 0 1000 520" preserveAspectRatio="none" aria-hidden="true">
+              <rect width="1000" height="520" fill="#f7faff"></rect>
+              <g fill="none" stroke="#edf2f7" stroke-width="1" opacity=".9">
+                <path d="M0 89.7H1000M0 197.2H1000M0 304.8H1000M0 412.4H1000"></path>
+                <path d="M166.7 0V520M333.3 0V520M500 0V520M666.7 0V520M833.3 0V520"></path>
+              </g>
+              <g fill="#e5ecf4" stroke="#d3deea" stroke-width=".72" stroke-linejoin="round" fill-rule="evenodd">
+<path d="M1000.0,364.2L996.5,365.8L996.1,364.5L1000.0,362.4L1000.0,364.2ZM995.5,367.0L996.0,369.9L992.7,370.0L993.5,367.2L995.5,367.0ZM0.2,364.0L0.0,362.4L0.6,362.3L0.2,364.0Z"></path>
+<path d="M594.6,308.6L604.7,315.9L604.9,318.0L608.9,321.6L607.6,326.0L609.6,329.4L608.9,335.3L612.0,341.8L609.8,343.9L601.4,346.9L596.0,346.1L593.7,338.6L585.4,334.7L582.3,328.2L581.5,321.0L585.4,316.9L584.5,308.9L594.6,308.6Z"></path>
+<path d="M475.9,205.9L475.9,212.0L466.8,211.8L466.8,221.0L464.2,221.3L464.1,228.3L452.6,229.5L452.7,228.0L459.0,227.7L461.4,219.9L465.3,216.0L466.6,211.5L468.4,208.4L473.0,208.5L475.9,205.9Z"></path>
+<path d="M158.4,129.1L151.0,124.0L146.0,122.5L144.9,117.2L141.3,115.6L140.8,112.7L137.5,110.1L138.9,104.3L134.1,102.0L123.7,90.4L118.2,93.6L113.8,89.7L108.3,88.6L108.4,54.8L120.8,57.7L139.5,53.1L141.4,54.6L144.1,52.1L150.7,55.7L154.4,53.2L154.8,55.9L162.6,54.5L179.9,57.7L183.6,59.5L179.7,61.3L184.7,62.1L194.6,61.0L197.6,63.2L200.6,61.4L197.7,59.8L199.5,58.6L205.1,58.1L218.2,62.2L226.5,61.7L226.2,59.5L228.7,58.9L233.0,60.1L233.0,63.5L234.8,60.6L237.0,60.7L238.2,57.1L232.0,53.5L232.2,49.5L235.5,46.9L242.0,49.1L245.8,53.1L243.3,54.9L248.5,55.6L248.5,59.3L252.2,56.5L255.5,58.8L254.7,61.4L257.4,63.8L262.3,58.2L262.4,54.2L270.5,55.0L274.2,56.8L272.3,60.5L274.3,62.4L273.9,64.2L268.5,66.7L261.8,66.1L257.4,72.5L248.0,76.7L247.9,79.0L244.6,79.5L238.2,86.4L237.0,93.4L241.1,94.0L243.6,100.1L247.5,99.4L263.9,106.5L271.5,107.1L271.9,113.8L278.0,121.2L281.7,116.3L278.3,108.8L282.7,107.1L287.4,102.1L285.3,96.6L281.9,93.9L285.2,90.2L283.0,81.3L294.9,80.9L301.7,85.6L306.7,85.8L307.5,93.4L312.1,96.1L316.1,94.1L320.6,88.5L329.5,100.5L328.3,102.8L340.7,108.9L341.8,112.0L345.1,113.8L345.3,117.8L333.2,124.6L315.6,124.7L302.5,136.9L309.3,131.6L319.3,128.3L321.7,130.0L319.1,132.4L320.9,139.0L324.5,140.8L329.1,140.3L331.9,136.2L333.9,140.1L318.4,148.7L316.3,148.4L316.2,145.4L321.0,142.4L313.5,143.0L311.7,140.9L311.7,136.0L307.7,134.7L301.4,143.4L292.0,143.4L286.6,148.4L281.3,148.4L280.1,148.9L280.7,151.1L271.0,155.4L269.1,154.3L271.8,148.6L270.7,142.2L254.5,131.6L245.4,132.2L238.0,130.3L236.6,127.7L235.7,129.1L158.4,129.1ZM268.7,79.2L272.6,79.2L267.3,81.8L268.7,79.2ZM275.3,41.8L276.8,40.3L283.2,40.7L288.2,43.7L279.2,44.0L275.3,41.8ZM276.8,82.4L279.8,81.9L278.7,83.8L276.8,82.4ZM240.0,35.9L234.4,37.1L231.1,36.1L236.5,33.5L240.0,35.9ZM239.7,26.4L232.9,26.7L232.1,25.7L239.7,26.4ZM234.6,23.6L229.7,25.6L226.0,22.0L231.2,22.4L234.6,23.6ZM272.4,37.9L243.3,36.4L242.0,32.7L239.2,31.1L230.2,29.6L231.3,28.1L245.5,29.5L247.9,30.7L247.3,32.0L252.3,33.7L274.6,33.3L278.2,36.1L272.4,37.9ZM194.8,25.1L188.7,27.2L184.6,26.1L186.9,24.9L194.8,25.1ZM195.4,22.9L192.0,23.6L187.4,23.6L190.3,22.1L195.4,22.9ZM346.1,119.8L342.2,126.2L344.0,125.0L345.9,125.7L344.9,127.0L351.5,128.2L350.6,130.8L352.5,130.2L353.8,134.4L352.6,137.5L349.5,137.0L349.3,133.6L346.1,136.7L344.5,136.6L346.4,134.9L343.7,134.0L335.4,134.1L336.7,131.8L335.5,130.8L340.7,122.9L346.1,119.8ZM261.4,69.1L277.5,76.3L275.0,77.4L269.1,74.9L262.4,78.7L261.5,76.6L257.7,77.0L260.1,75.2L261.4,69.1ZM283.8,43.9L293.8,47.5L294.2,49.0L299.3,48.2L308.9,51.9L314.0,56.7L308.9,58.4L328.2,65.0L322.4,71.7L314.7,66.7L311.1,67.2L310.7,69.3L318.6,73.9L320.4,77.5L319.4,80.1L308.9,76.2L316.2,82.7L308.7,81.3L292.1,72.9L284.1,74.5L281.8,73.3L283.6,70.6L294.6,70.1L294.6,67.0L298.2,63.5L296.4,60.7L286.5,57.8L288.3,56.8L280.7,53.2L274.2,54.7L253.7,52.3L251.4,51.1L254.3,49.4L250.3,49.4L249.4,45.8L254.4,41.1L261.6,40.2L259.5,42.5L261.7,44.7L264.3,41.8L271.3,40.3L276.1,44.1L275.7,46.4L283.8,43.9ZM234.7,39.9L248.6,40.0L238.1,46.5L235.0,46.4L233.2,43.2L234.7,39.9ZM158.7,31.9L169.2,26.9L177.2,26.4L176.8,29.1L174.7,30.4L158.7,31.9ZM134.0,110.7L133.2,114.8L135.6,117.7L129.9,111.7L134.0,110.7ZM207.0,20.4L219.9,22.2L223.1,25.4L207.8,23.7L210.5,22.7L207.0,20.4ZM156.9,130.9L144.3,125.5L143.4,122.8L150.7,124.5L155.8,128.9L156.9,130.9ZM153.0,38.4L173.5,38.8L179.1,41.3L168.8,44.8L165.4,48.8L158.1,50.6L150.2,47.1L155.7,40.6L153.0,38.4ZM200.5,32.8L205.9,32.4L206.4,34.1L204.7,35.8L188.3,38.0L183.7,36.9L189.5,35.3L173.0,35.1L179.4,30.6L192.2,33.9L197.0,34.2L193.1,30.7L195.6,29.4L198.5,29.8L200.5,32.8ZM207.2,44.2L209.8,50.2L219.5,53.7L219.2,55.3L214.6,55.6L216.4,57.0L215.5,58.3L205.7,56.7L185.2,59.0L174.1,53.9L187.7,52.5L172.5,51.9L171.0,50.5L177.5,49.1L168.3,48.2L172.6,44.1L180.0,41.9L182.9,42.6L181.5,44.3L187.7,43.2L191.5,45.0L194.7,43.2L199.5,47.9L200.9,46.4L198.9,42.7L207.2,44.2ZM217.9,41.7L221.2,40.0L229.5,40.3L230.2,41.3L227.6,43.1L231.8,44.6L231.3,47.8L224.1,48.9L215.3,44.8L221.0,44.1L217.9,41.7ZM202.9,41.4L209.7,41.5L207.3,43.9L202.9,41.4ZM228.5,31.4L227.3,35.9L222.8,36.2L219.8,35.7L219.8,33.6L215.3,33.8L215.1,31.1L226.4,29.7L228.5,31.4ZM235.2,14.7L243.3,13.4L256.1,16.8L261.6,20.3L252.7,24.1L242.0,23.9L239.0,22.4L241.3,20.2L236.2,20.2L231.4,17.4L235.2,14.7ZM245.6,11.1L262.5,8.4L268.9,9.6L271.1,7.7L279.7,6.7L328.2,8.5L312.1,12.5L318.1,12.5L302.3,18.6L286.4,20.4L290.2,20.8L288.3,21.4L290.6,23.2L278.4,27.9L283.6,29.5L276.2,31.6L251.4,30.6L251.1,28.9L256.2,28.1L254.8,25.5L264.0,26.8L255.7,23.8L263.6,20.3L258.5,17.0L272.6,16.3L256.7,16.1L245.6,11.1ZM289.3,64.0L286.1,64.2L285.5,62.4L286.6,60.4L291.3,60.9L289.3,64.0ZM234.3,57.0L232.6,58.3L222.8,55.9L227.2,53.3L234.3,57.0ZM320.8,126.0L325.4,126.6L328.3,128.7L320.8,126.0ZM322.2,136.1L325.2,138.4L327.7,138.3L325.3,140.0L321.1,137.3L322.2,136.1Z"></path>
+<path d="M158.8,129.1L235.7,129.1L236.6,127.7L238.0,130.3L245.4,132.2L254.5,131.6L270.7,142.2L271.8,148.6L269.1,153.9L270.3,155.4L280.7,151.1L280.1,148.9L281.3,148.4L286.6,148.4L292.0,143.4L301.4,143.4L307.7,134.7L311.7,136.0L311.7,140.9L314.0,144.1L305.2,148.2L303.3,153.0L305.7,155.5L295.2,158.0L300.2,158.0L294.6,158.7L291.9,165.2L290.2,163.2L291.5,167.1L289.1,171.4L289.7,168.8L287.9,164.4L288.0,168.3L286.1,167.7L288.1,168.8L289.6,177.3L274.1,192.1L274.1,197.1L277.6,208.4L276.7,214.4L274.5,214.5L273.0,212.1L267.5,197.5L263.6,198.5L260.0,195.8L251.1,196.7L251.6,200.3L241.0,198.0L237.0,199.1L230.2,205.0L230.2,212.1L229.1,212.2L224.9,210.3L219.6,199.5L215.3,198.1L213.6,200.9L211.3,199.9L204.1,190.9L191.6,192.5L181.3,187.5L174.6,188.1L170.8,182.8L164.9,180.7L154.4,160.3L154.1,151.5L155.8,141.6L153.6,132.0L158.0,132.5L159.5,135.9L158.8,129.1ZM67.1,232.1L69.9,235.1L66.8,236.5L67.1,232.1ZM66.0,229.8L65.5,231.1L64.7,229.8L66.0,229.8ZM64.5,229.3L63.0,229.2L63.2,228.7L64.5,229.3ZM60.3,227.4L62.1,228.4L61.9,228.6L60.3,227.4ZM57.3,225.2L57.0,226.4L56.1,225.7L57.3,225.2ZM39.8,88.6L38.4,90.5L34.8,88.9L37.6,88.3L39.8,88.6ZM70.4,98.8L77.4,98.3L75.0,100.0L70.8,100.4L70.4,98.8ZM108.4,54.8L108.3,88.6L113.8,89.7L118.2,93.6L123.7,90.4L134.1,102.0L138.9,104.3L137.4,108.3L133.4,105.8L127.6,96.4L120.5,96.1L111.5,91.3L91.3,86.5L88.3,87.2L88.8,89.7L78.6,92.7L79.4,87.1L82.4,85.9L81.6,85.0L72.2,92.0L74.2,93.7L71.6,96.3L59.9,104.0L41.8,109.1L59.2,100.4L61.9,98.4L63.8,93.5L58.2,95.3L54.6,93.0L50.1,94.4L50.3,91.0L48.6,89.7L44.9,90.4L40.7,87.8L38.6,84.3L39.6,82.2L42.9,78.4L53.4,76.1L51.3,73.9L53.4,72.5L41.8,73.7L33.0,69.3L43.1,66.1L45.4,66.1L45.0,67.9L50.9,67.7L36.8,59.7L38.3,57.8L43.2,57.7L50.3,52.6L65.1,48.9L71.3,51.3L108.4,54.8ZM22.8,77.4L26.4,76.4L31.4,77.8L22.8,77.4Z"></path>
+<path d="M742.7,128.3L738.2,131.1L736.6,136.3L731.1,135.1L729.1,141.5L722.1,143.7L724.6,150.0L722.7,150.9L722.9,153.0L706.1,149.6L704.1,152.4L697.7,151.7L689.6,159.0L688.8,157.3L685.3,157.2L684.8,154.3L683.4,154.2L683.6,150.6L680.3,148.0L672.3,148.8L662.5,141.3L655.4,143.5L655.5,156.7L650.2,153.0L645.8,155.0L645.8,151.4L642.6,150.1L639.7,144.8L642.4,145.2L642.5,142.6L647.3,142.5L647.3,136.8L642.2,136.1L636.4,138.4L633.5,133.6L629.1,131.3L632.1,123.9L634.9,126.0L635.3,123.3L641.0,119.4L645.4,119.4L654.8,123.3L657.7,121.8L670.4,122.7L671.1,121.0L666.6,118.5L671.4,114.8L669.4,112.4L670.7,111.1L691.9,106.2L696.8,107.0L697.7,110.7L704.2,111.0L704.0,113.0L713.6,109.4L712.6,110.5L722.3,122.4L723.8,120.5L727.6,122.6L733.2,122.3L737.6,126.6L741.2,126.1L742.7,128.3Z"></path>
+<path d="M655.4,143.5L662.5,141.3L672.3,148.8L680.3,148.0L683.6,150.6L683.4,154.2L684.8,154.3L685.3,157.2L688.8,157.3L689.6,159.0L697.1,153.3L695.6,155.9L702.9,158.3L699.4,160.9L696.1,160.6L696.3,157.9L692.6,158.8L690.4,163.1L687.3,164.5L689.4,165.3L690.0,168.0L688.4,171.6L684.8,170.8L684.9,168.6L678.3,165.4L673.3,161.2L671.9,157.5L668.0,157.0L666.6,153.4L662.9,151.5L658.1,154.8L658.6,156.6L655.5,156.7L655.4,143.5Z"></path>
+<path d="M891.7,314.2L901.6,318.7L905.5,324.4L910.1,326.6L910.8,328.5L908.3,328.9L908.9,331.3L918.6,342.8L910.9,341.2L905.7,333.8L902.1,332.2L898.0,334.4L898.4,337.0L896.2,338.3L891.8,337.5L891.7,314.2ZM925.1,319.1L924.5,321.9L923.4,318.4L918.5,314.7L925.1,319.1ZM922.2,324.5L915.9,327.5L912.0,325.4L916.2,324.6L917.1,322.8L917.3,324.7L918.9,324.4L921.2,321.9L920.9,319.8L922.6,319.7L922.2,324.5ZM929.2,323.3L933.4,328.3L933.0,329.3L931.0,328.3L929.2,323.3Z"></path>
+<path d="M891.7,314.2L891.8,337.5L889.3,334.6L882.3,335.0L885.2,331.1L883.1,324.2L871.3,317.5L869.4,319.6L866.6,314.9L871.4,312.8L867.3,312.8L862.6,308.2L867.7,306.2L872.2,307.6L873.4,314.8L876.3,316.9L881.8,310.9L891.7,314.2ZM847.4,337.4L845.7,341.2L842.9,341.6L844.4,338.1L847.4,337.4ZM872.8,329.6L873.0,325.6L873.6,324.4L874.2,327.1L872.8,329.6ZM825.9,293.2L827.4,298.3L830.5,301.6L827.3,302.0L826.4,307.7L823.8,310.2L822.6,319.2L822.2,317.9L819.1,319.6L814.6,316.0L811.3,317.3L810.3,315.6L806.2,315.3L802.6,303.3L804.6,297.6L807.0,302.1L813.5,299.5L816.1,300.5L818.4,299.7L821.8,289.4L827.5,290.0L825.9,293.2ZM862.4,315.9L863.4,318.7L855.3,317.0L855.9,315.0L862.4,315.9ZM852.4,318.4L850.0,316.2L853.5,317.2L852.4,318.4ZM855.4,297.0L857.5,300.8L855.8,308.1L853.9,301.2L855.4,297.0ZM844.7,301.5L847.9,299.7L843.6,304.0L833.8,304.0L833.4,306.7L835.9,309.9L842.6,307.0L837.5,311.7L842.1,324.0L839.5,323.8L840.9,320.8L837.5,321.2L836.0,314.3L834.2,315.3L834.5,324.7L831.6,324.1L831.9,317.4L829.9,314.9L833.4,302.8L835.8,300.1L844.7,301.5ZM830.5,339.1L833.1,338.4L835.3,341.5L834.2,341.6L830.5,339.1ZM835.3,334.4L841.4,333.9L841.0,335.8L833.1,336.4L835.3,334.4ZM827.5,333.9L830.9,336.0L824.3,337.2L827.5,333.9ZM794.6,326.0L807.1,329.5L807.7,328.0L821.4,334.8L818.2,336.2L792.7,329.4L794.6,326.0ZM789.9,308.7L794.7,315.8L793.9,325.8L790.9,325.9L785.0,320.0L773.9,298.3L764.7,285.2L770.8,286.0L779.6,297.3L782.4,297.4L788.4,304.5L787.3,307.4L789.9,308.7Z"></path>
+<path d="M309.3,493.6L311.8,497.9L319.3,501.0L315.4,503.0L309.4,501.6L309.3,493.6ZM339.2,416.1L337.5,428.3L341.0,431.4L342.3,437.2L339.6,441.8L335.5,443.7L326.8,444.1L327.4,450.7L325.7,452.0L319.1,452.1L319.5,455.7L322.9,455.6L323.7,457.5L318.9,460.8L317.9,466.3L313.1,468.2L312.3,470.9L317.7,474.2L316.7,477.4L307.9,486.8L310.7,492.6L300.2,491.3L299.1,486.6L296.3,485.5L296.1,481.7L299.1,477.8L300.9,466.1L302.2,465.4L299.6,456.4L301.6,444.4L303.3,443.1L302.4,436.3L304.5,433.9L306.1,427.5L304.1,417.3L306.5,406.9L310.3,401.3L310.0,392.8L313.0,391.0L313.6,386.4L315.9,383.1L319.5,384.0L321.2,386.6L322.3,383.7L325.4,383.8L331.0,390.5L339.5,395.1L337.2,402.1L345.3,403.0L349.6,396.4L351.0,401.4L343.6,408.3L339.2,416.1Z"></path>
+<path d="M309.4,501.6L314.0,501.7L310.7,504.3L302.8,502.3L292.6,494.3L302.5,498.7L304.8,494.6L309.3,493.6L309.4,501.6ZM306.7,367.9L311.6,386.9L313.9,387.3L313.0,391.0L310.0,392.8L310.3,401.3L306.5,406.9L304.1,417.3L306.1,427.5L304.5,433.9L302.4,436.3L303.3,443.1L301.6,444.4L299.6,456.4L302.2,465.4L300.9,466.1L299.1,477.8L296.1,481.7L296.3,485.5L299.1,486.6L300.2,491.3L309.5,492.4L303.2,494.5L301.6,498.0L291.8,492.3L290.0,479.4L294.1,473.2L289.9,472.1L292.5,468.9L293.5,463.0L296.6,464.3L298.0,456.8L296.1,455.9L295.3,460.3L293.5,459.8L296.6,445.6L295.6,438.1L296.8,438.0L301.6,421.1L301.4,408.3L303.0,404.0L305.3,381.5L304.5,370.6L306.7,367.9Z"></path>
+<path d="M580.6,315.0L585.4,334.7L579.8,335.4L578.8,347.1L582.3,348.5L582.5,352.4L580.4,352.3L575.5,346.5L573.8,347.6L567.4,344.1L561.5,344.6L560.4,331.0L555.8,329.7L552.8,333.5L548.5,333.8L545.4,325.9L533.8,325.6L537.8,321.0L540.5,322.7L544.5,317.5L545.6,311.1L549.0,306.4L552.6,287.9L554.1,286.8L562.2,290.4L563.4,287.9L571.3,286.0L576.0,286.1L579.0,289.5L582.5,288.3L585.6,292.2L585.5,296.4L586.6,296.9L583.0,302.7L580.6,315.0Z"></path>
+<path d="M613.9,307.9L613.8,294.8L616.3,290.8L621.3,287.0L624.9,286.9L635.9,270.9L636.0,263.9L642.0,261.7L639.1,275.8L632.6,289.7L619.8,303.8L615.5,310.9L613.9,307.9Z"></path>
+<path d="M604.9,318.0L604.7,315.9L594.2,308.2L594.1,304.4L597.3,298.0L594.5,289.6L598.1,285.1L600.4,288.9L605.9,291.9L609.9,292.6L613.2,289.6L616.3,290.8L613.8,294.8L613.9,307.9L615.5,310.9L611.8,314.1L608.9,321.6L604.9,318.0Z"></path>
+<path d="M566.1,273.7L565.4,268.6L560.9,259.7L564.0,248.6L566.4,248.8L566.3,233.1L569.4,233.1L569.4,225.9L602.4,225.9L604.1,238.1L606.7,240.3L602.4,244.0L600.8,256.2L595.2,266.7L594.4,273.7L592.2,261.1L591.0,260.9L589.1,261.9L590.0,265.1L587.1,269.6L583.3,267.9L580.5,271.1L574.3,270.9L571.6,267.5L569.6,268.0L568.2,272.8L566.4,273.9L568.2,275.3L566.1,273.7Z"></path>
+<path d="M566.4,248.8L564.0,248.6L562.0,253.4L560.9,259.7L563.5,264.9L558.3,270.8L552.3,272.6L549.9,276.5L542.4,278.2L541.6,273.3L538.8,270.6L539.4,268.9L543.0,269.0L540.5,257.0L538.8,256.9L537.6,253.3L538.8,248.6L542.4,245.2L544.2,231.7L541.9,228.4L541.3,222.8L544.1,220.9L566.2,234.6L566.4,248.8Z"></path>
+<path d="M300.8,234.1L300.8,240.1L293.2,239.0L299.1,237.9L296.7,233.4L300.8,234.1Z"></path>
+<path d="M301.7,241.7L301.1,233.5L305.7,234.4L310.2,238.1L309.2,239.5L303.7,238.7L301.7,241.7Z"></path>
+<path d="M1000.0,48.4L1000.0,50.8L996.5,49.9L1000.0,48.4ZM636.4,138.4L632.4,141.1L629.7,144.8L635.0,154.9L632.8,157.3L626.3,152.4L611.0,149.1L601.9,142.6L606.2,139.0L604.6,137.6L608.7,136.1L606.2,135.9L606.3,134.3L610.4,133.1L611.3,126.9L598.2,123.4L597.3,121.2L595.1,121.0L595.5,119.2L593.8,117.1L588.3,118.0L587.0,114.5L590.8,113.5L585.4,108.3L585.8,105.6L578.3,103.4L575.8,98.7L577.0,97.6L576.2,94.2L580.9,89.6L578.0,87.8L587.5,79.4L583.4,76.9L584.6,74.6L582.1,71.9L583.9,68.8L580.7,64.8L583.3,62.0L579.0,59.7L579.4,57.1L589.3,54.1L614.1,62.9L614.2,65.3L606.6,68.1L592.2,65.9L596.7,68.5L597.1,73.8L602.8,75.8L601.5,72.6L603.3,71.2L610.0,73.4L612.3,72.6L610.5,69.9L616.9,66.4L622.1,67.9L623.7,65.4L621.4,63.3L622.7,61.1L620.7,58.9L628.5,60.1L630.1,62.1L626.5,62.5L626.6,64.5L628.7,65.7L649.2,57.9L651.3,58.1L648.6,60.2L663.3,57.8L666.5,60.0L669.7,57.6L666.8,55.5L668.2,54.3L690.3,60.6L692.2,58.8L685.9,55.7L686.8,54.0L685.3,50.1L694.3,42.9L701.6,43.8L702.2,45.8L699.6,48.7L702.2,52.4L701.6,57.3L704.6,59.5L698.0,67.0L701.2,67.5L708.5,61.8L706.9,59.8L708.2,57.4L705.1,57.1L704.4,55.1L706.7,51.5L703.1,48.6L708.0,46.2L707.4,43.6L710.2,45.5L709.1,49.0L712.1,49.7L710.8,47.1L715.5,45.7L726.4,47.5L723.9,44.5L723.6,40.7L741.2,39.7L738.9,37.8L742.1,35.4L779.9,30.7L783.3,27.7L789.9,26.2L794.6,27.3L790.8,28.2L797.1,28.8L797.9,30.6L808.5,29.7L817.0,32.8L816.3,34.7L803.9,38.8L813.9,39.5L815.4,41.8L821.0,40.3L842.2,43.1L842.4,40.4L852.7,41.0L857.2,42.9L858.5,45.2L856.8,46.7L864.7,51.0L867.4,47.2L871.8,48.8L888.5,48.5L886.5,45.1L890.2,43.6L915.3,45.9L924.9,50.8L941.7,50.7L944.0,52.2L943.6,54.8L947.1,55.8L966.2,55.3L971.0,58.5L974.5,57.3L972.2,55.0L973.5,53.4L988.1,54.2L1000.0,57.5L1000.0,71.8L992.8,73.1L998.3,79.0L997.9,81.4L992.7,80.6L982.4,83.7L973.1,90.1L969.2,87.6L961.9,90.4L960.7,89.1L954.3,90.1L950.0,96.0L953.3,98.2L952.9,103.4L950.4,103.6L949.2,106.6L950.3,108.1L945.5,109.9L944.5,114.0L940.4,114.9L939.5,118.6L935.5,121.9L931.8,106.2L933.1,101.2L935.6,97.4L939.9,96.6L954.6,85.6L956.9,80.5L953.5,80.8L951.8,83.8L944.8,87.7L942.5,83.3L935.3,84.5L928.4,90.5L930.7,92.7L920.2,94.0L920.4,91.4L916.1,90.9L912.6,92.7L895.0,93.1L875.4,108.6L879.7,109.0L883.8,112.1L888.6,110.5L892.6,114.4L889.1,131.1L874.6,149.2L870.9,151.3L867.4,149.6L863.3,153.4L864.0,143.6L869.7,142.9L875.1,131.0L863.9,133.4L862.7,130.1L859.4,127.5L854.6,126.4L849.9,115.5L843.3,113.1L833.8,115.6L835.4,118.5L831.4,125.0L827.4,127.3L817.7,124.6L807.4,128.6L801.3,128.1L796.9,124.5L788.0,125.2L784.0,123.7L783.5,121.0L774.6,118.2L771.7,121.9L772.9,124.0L770.2,126.5L756.2,122.6L742.7,128.3L731.6,121.7L727.6,122.6L723.8,120.5L722.3,122.4L712.6,110.5L713.6,109.4L704.0,113.0L704.2,111.0L697.7,110.7L696.8,107.0L691.9,106.2L670.7,111.1L669.4,112.4L671.4,114.8L666.6,118.5L671.1,121.0L670.4,122.7L657.7,121.8L654.8,123.3L645.4,119.4L641.0,119.4L635.3,123.3L634.9,126.0L632.1,123.9L629.1,131.3L635.3,136.0L635.0,137.9L636.4,138.4ZM766.5,13.4L778.3,18.7L777.6,21.9L763.8,21.4L753.3,16.7L766.5,13.4ZM792.7,22.5L791.9,24.0L776.2,25.4L783.6,20.3L792.7,22.5ZM882.0,32.5L903.0,33.8L900.8,36.5L886.0,37.3L880.5,34.9L882.0,32.5ZM918.7,35.6L915.5,37.0L905.9,35.2L906.6,34.1L918.7,35.6ZM888.5,41.7L894.6,40.0L898.9,42.3L888.5,41.7ZM630.0,15.2L634.8,16.1L643.1,15.4L632.2,17.9L629.2,17.0L630.8,15.9L624.6,15.8L630.0,15.2ZM563.1,110.0L554.6,109.6L559.1,106.9L563.2,108.1L563.1,110.0ZM655.3,37.2L654.5,35.6L669.9,31.4L689.3,28.9L691.3,30.3L662.4,38.3L653.9,45.3L654.5,48.3L659.8,51.2L649.1,51.1L643.3,48.5L642.9,46.6L645.8,45.8L645.7,43.8L651.2,40.8L648.6,40.3L655.3,37.2ZM896.3,109.9L897.9,119.2L901.8,129.2L897.7,128.0L896.0,133.2L898.7,136.9L898.6,139.4L896.5,137.2L894.7,140.0L894.9,122.1L893.3,118.6L893.6,113.7L896.1,112.0L895.0,110.4L896.3,109.9ZM13.8,66.0L15.7,66.9L15.1,64.3L22.6,64.9L28.1,68.2L20.7,70.2L19.6,74.4L10.5,70.4L4.6,70.3L3.0,69.1L3.6,67.7L0.3,68.6L1.6,70.3L0.0,71.8L0.0,57.5L14.1,63.8L13.8,66.0ZM0.0,50.8L0.4,48.2L6.7,49.2L3.6,50.6L0.0,50.8ZM593.6,139.1L598.6,142.0L601.5,141.8L594.1,145.7L592.6,145.0L593.2,143.3L590.2,142.3L593.6,139.1Z"></path>
+<path d="M280.8,210.1L283.8,208.6L283.8,209.5L280.8,210.1ZM286.1,209.5L285.6,212.0L283.9,207.9L286.1,209.5ZM283.6,214.6L284.6,217.5L283.9,219.8L282.2,216.7L283.6,214.6Z"></path>
+<path d="M330.0,490.8L337.4,488.1L339.6,489.7L335.0,492.0L330.0,490.8Z"></path>
+<path d="M529.0,19.2L547.2,17.7L559.8,21.7L552.9,23.1L547.6,29.4L544.2,29.5L538.2,27.3L540.7,26.1L531.2,22.0L529.0,19.2ZM586.4,55.4L579.4,57.1L580.6,54.6L577.0,53.2L572.7,54.4L568.7,58.6L559.0,56.1L555.6,57.1L555.2,59.5L550.0,58.9L549.2,60.9L546.6,60.9L537.7,72.5L538.7,73.7L537.7,75.1L534.9,75.1L533.1,78.4L533.3,83.2L535.1,85.0L534.2,89.2L530.6,93.8L528.8,91.6L523.3,95.7L519.6,96.5L515.7,94.7L513.9,82.6L529.2,73.6L541.0,61.6L553.3,54.4L564.0,53.1L568.2,50.1L578.2,49.5L586.9,52.2L583.3,53.1L586.4,55.4ZM572.0,19.7L555.8,19.5L548.2,16.8L563.7,15.6L576.1,17.7L572.0,19.7ZM568.7,25.6L557.6,26.3L559.5,25.3L557.8,24.2L563.6,23.5L568.7,25.6Z"></path>
+<path d="M379.4,6.4L424.7,5.3L442.1,8.2L411.4,10.0L438.7,11.7L435.6,13.8L456.2,11.1L466.1,13.3L444.3,17.3L450.7,17.5L445.3,22.4L445.4,26.4L448.7,28.7L439.8,30.0L444.9,31.9L445.6,35.0L442.6,35.3L446.2,38.4L440.0,38.6L443.2,40.1L442.3,41.4L434.5,41.9L438.1,46.0L431.1,45.4L438.5,48.5L439.6,51.4L434.6,52.1L429.0,48.7L430.0,51.1L426.8,53.0L437.9,53.3L422.9,59.3L411.7,60.5L405.0,65.7L389.4,70.1L385.6,77.2L381.1,80.0L382.2,82.8L379.5,89.3L365.9,86.6L356.6,76.6L354.8,71.1L350.9,67.8L351.9,65.1L350.1,63.9L352.8,59.7L357.0,58.3L358.7,54.0L351.5,56.4L348.1,55.2L349.0,50.8L357.2,51.7L344.9,47.9L348.0,44.5L337.3,34.0L329.8,31.9L309.7,32.1L301.7,28.7L314.5,27.3L296.4,24.9L296.8,23.6L317.5,20.1L318.5,18.8L311.0,17.5L327.1,13.2L326.0,11.6L341.1,10.1L352.7,11.2L360.0,9.2L376.3,12.0L369.7,10.0L370.1,8.5L379.4,6.4Z"></path>
+<path d="M691.5,479.2L695.9,480.8L695.2,483.1L691.0,483.3L691.5,479.2Z"></path>
+<path d="M847.5,335.9L852.7,334.5L853.7,334.9L847.5,338.5L847.5,335.9Z"></path>
+<path d="M546.7,405.5L548.3,408.1L552.8,408.7L555.3,406.9L555.3,393.7L558.0,401.0L560.0,400.7L564.8,395.4L571.3,396.2L575.3,389.4L581.8,384.1L586.6,384.6L588.7,392.2L588.4,397.5L586.2,397.1L585.2,400.7L586.9,402.7L591.2,400.7L589.5,407.9L578.4,422.4L571.6,426.6L562.7,426.3L555.8,429.6L550.7,426.3L550.6,418.4L545.4,407.3L546.7,405.5ZM579.3,407.6L575.0,412.0L577.1,414.7L581.5,409.8L579.3,407.6Z"></path>
+<path d="M581.5,409.8L577.1,414.7L575.0,412.0L579.3,407.6L581.5,409.8Z"></path>
+<path d="M174.6,188.1L181.3,187.5L191.6,192.5L204.1,190.9L209.8,198.8L213.6,200.9L215.3,198.1L217.6,198.0L224.9,210.3L230.2,212.1L228.1,224.3L233.6,237.3L237.7,239.8L246.1,237.1L247.9,235.7L249.2,229.5L258.2,227.6L258.8,230.1L256.0,239.3L247.2,240.9L247.2,242.9L246.0,243.0L248.7,247.2L245.1,247.2L243.8,252.7L239.2,247.7L231.8,248.7L212.5,239.2L207.0,233.3L207.6,228.0L205.5,223.2L188.3,201.0L185.7,193.0L181.2,190.8L181.5,196.7L196.0,221.7L194.4,223.0L188.4,216.1L188.1,211.5L180.4,205.4L182.9,202.4L179.1,198.8L174.6,188.1Z"></path>
+<path d="M341.7,412.8L352.2,422.2L350.5,428.2L343.8,429.8L337.7,426.4L339.9,413.2L341.7,412.8Z"></path>
+<path d="M351.0,423.9L352.2,422.2L350.6,419.8L341.7,412.8L339.9,413.2L351.0,401.4L351.0,398.5L349.6,396.4L348.3,397.1L349.2,391.0L346.1,390.7L345.0,385.0L339.1,384.0L338.4,377.2L340.3,370.0L338.1,366.8L338.2,363.3L332.9,363.1L331.9,354.2L321.3,349.5L318.3,346.3L318.5,339.8L314.9,340.4L310.4,344.3L304.0,344.3L304.2,338.9L299.5,340.9L296.6,338.8L297.2,337.2L294.5,331.8L296.9,328.6L297.5,323.7L305.9,320.2L307.2,308.9L305.5,302.9L307.7,301.3L306.1,300.9L306.1,298.7L312.4,297.5L313.7,300.8L317.9,302.0L324.0,296.9L321.5,295.9L320.0,290.3L324.7,291.3L330.6,288.6L331.3,286.2L333.4,286.8L334.6,290.6L333.4,294.9L336.0,300.1L344.5,298.3L344.5,295.8L352.9,297.2L357.5,289.8L359.7,298.0L361.2,298.6L359.2,304.0L360.0,305.1L364.9,305.7L365.0,309.3L367.2,306.9L375.3,310.4L376.2,314.5L379.4,313.4L388.9,315.1L396.6,322.1L401.1,323.3L403.5,331.2L402.4,337.1L392.6,351.7L390.9,368.9L386.3,383.5L383.4,387.2L376.0,388.6L367.6,394.1L365.3,397.6L364.2,407.7L353.6,423.9L351.7,425.9L351.0,423.9Z"></path>
+<path d="M306.9,344.1L318.5,339.8L318.3,346.3L321.3,349.5L331.9,354.2L332.9,363.1L338.2,363.3L338.1,366.8L340.3,370.0L339.3,376.4L335.8,374.2L328.4,375.2L325.9,384.6L322.3,383.7L321.2,386.6L319.5,384.0L315.9,383.1L311.6,386.9L309.0,377.9L309.9,374.4L306.7,367.9L308.4,364.0L307.4,358.5L309.3,349.9L306.9,344.1Z"></path>
+<path d="M305.9,320.2L297.5,323.7L296.9,328.6L294.5,331.8L297.2,337.2L296.6,338.8L299.5,340.9L304.2,338.9L304.0,344.3L306.9,344.1L309.3,349.9L307.4,358.5L308.4,364.0L304.5,370.6L288.9,357.4L278.4,330.6L274.3,326.8L275.2,325.2L273.9,321.8L276.9,317.0L276.5,320.7L280.0,322.6L281.6,321.1L283.8,315.6L290.2,310.4L291.4,305.0L297.0,313.1L303.3,312.9L305.4,314.6L303.6,318.3L305.9,320.2Z"></path>
+<path d="M313.7,300.8L312.4,297.5L306.1,298.7L306.1,300.9L307.7,301.3L305.5,302.9L307.2,308.9L305.9,320.2L303.6,318.3L305.4,314.6L303.3,312.9L297.0,313.1L291.4,305.0L284.9,303.4L281.0,299.9L282.1,295.4L285.8,291.0L283.7,278.9L285.4,276.4L284.8,274.3L289.8,271.0L291.9,265.1L296.1,264.6L301.7,260.4L301.9,262.6L297.5,267.4L296.4,272.0L297.8,272.2L300.1,279.8L305.3,279.9L307.3,283.0L312.9,283.0L311.6,288.7L313.0,292.9L311.6,294.7L313.7,300.8Z"></path>
+<path d="M280.5,270.6L285.4,276.4L283.7,278.9L282.8,275.0L279.0,272.8L276.4,275.8L277.8,277.8L275.3,278.9L273.0,275.7L269.9,275.9L269.6,270.8L273.8,273.3L280.5,270.6Z"></path>
+<path d="M270.7,270.5L269.5,275.3L264.0,268.7L263.6,270.6L262.1,269.2L261.3,265.8L267.6,265.6L270.7,270.5Z"></path>
+<path d="M267.0,266.4L261.9,265.1L256.5,258.5L264.1,251.8L269.0,251.0L267.0,266.4Z"></path>
+<path d="M268.1,251.0L264.1,251.8L257.5,258.3L255.9,255.0L251.8,253.1L255.8,247.9L263.9,247.5L268.1,251.0Z"></path>
+<path d="M252.6,253.4L256.3,255.4L255.8,257.7L249.7,255.6L252.6,253.4Z"></path>
+<path d="M243.9,251.6L245.1,247.2L248.7,247.2L246.0,243.0L247.2,242.9L247.2,240.9L252.4,241.0L252.1,247.9L254.9,248.4L251.3,253.7L249.7,255.6L246.6,254.9L243.9,251.6Z"></path>
+<path d="M252.4,240.4L255.3,239.0L253.0,247.9L252.1,247.9L252.4,240.4Z"></path>
+<path d="M331.7,287.2L324.7,291.3L320.0,290.3L321.5,295.9L324.0,296.9L315.8,302.2L311.6,294.7L313.0,292.9L311.6,288.7L312.9,283.0L307.3,283.0L305.3,279.9L300.1,279.8L297.8,272.2L296.4,272.0L297.5,267.4L300.1,263.2L301.9,262.6L300.1,263.9L301.0,267.4L299.8,269.4L302.0,272.1L301.7,265.5L305.1,264.0L305.7,261.2L310.6,267.0L316.0,266.6L319.7,268.7L321.3,266.7L328.1,266.4L325.7,267.5L334.0,274.8L329.4,283.5L331.7,287.2Z"></path>
+<path d="M342.3,298.1L337.4,300.3L334.3,298.4L333.4,286.8L329.4,283.5L334.0,274.8L341.3,283.4L338.8,290.3L342.3,298.1Z"></path>
+<path d="M349.3,295.0L342.9,298.0L338.8,290.3L341.3,283.4L350.1,284.2L348.7,287.3L349.3,295.0Z"></path>
+<path d="M356.0,288.5L352.9,297.2L348.5,296.5L350.0,291.8L348.7,287.3L350.1,284.2L356.0,288.5ZM511.9,125.8L522.5,129.0L520.7,134.1L516.8,137.3L519.0,139.9L520.7,148.1L518.1,150.2L508.6,150.4L508.3,152.5L505.1,153.0L494.7,149.1L496.7,139.8L491.8,134.2L487.5,132.9L487.2,130.2L495.5,130.4L494.6,126.3L497.3,127.9L503.7,125.1L504.6,122.1L507.0,121.4L511.9,125.8ZM526.1,150.6L526.6,153.7L525.6,156.4L523.7,153.3L526.1,150.6Z"></path>
+<path d="M291.0,308.1L287.1,314.2L283.8,315.6L280.0,322.6L276.5,320.7L278.4,314.4L275.1,312.9L275.2,308.6L277.5,302.1L281.0,299.9L290.6,305.4L291.0,308.1Z"></path>
+<path d="M317.3,238.7L317.1,240.4L313.4,240.5L313.6,238.4L317.3,238.7Z"></path>
+<path d="M283.9,238.4L288.3,240.7L282.4,239.5L283.9,238.4Z"></path>
+<path d="M268.7,222.4L282.4,224.1L293.9,232.1L284.0,233.6L285.9,231.6L283.0,230.4L281.3,227.4L271.8,224.5L272.8,223.6L264.0,226.3L268.7,222.4Z"></path>
+<path d="M586.6,384.6L577.8,381.9L570.2,368.4L575.1,369.2L580.4,362.4L584.1,360.4L591.2,364.8L590.7,377.6L586.6,384.6Z"></path>
+<path d="M577.8,386.7L571.3,396.2L564.8,395.4L558.0,401.0L555.3,393.7L555.3,383.2L558.0,383.1L558.1,370.3L570.2,368.4L577.8,381.9L581.8,384.1L577.8,386.7Z"></path>
+<path d="M555.3,406.9L551.3,409.0L546.7,405.5L545.4,407.3L543.3,404.6L539.6,384.1L532.6,366.9L537.4,365.7L539.1,367.3L550.7,366.9L559.4,369.1L566.8,366.9L569.7,367.9L565.5,370.4L564.4,368.9L558.1,370.3L558.0,383.1L555.3,383.2L555.3,406.9Z"></path>
+<path d="M453.6,256.1L451.0,252.0L455.2,245.8L459.5,245.3L466.2,252.4L468.0,260.2L453.7,260.4L453.2,257.7L461.5,256.4L453.6,256.1Z"></path>
+<path d="M468.2,261.5L466.3,254.6L467.6,249.6L484.6,249.2L482.1,215.3L486.3,215.3L508.7,234.2L508.8,236.5L511.9,236.1L511.9,244.4L510.1,249.0L497.0,251.1L488.9,256.5L485.5,262.8L485.0,267.6L483.2,268.6L482.8,267.1L477.7,268.2L474.6,260.7L471.8,262.4L468.2,261.5Z"></path>
+<path d="M453.2,228.3L464.1,228.3L464.2,221.3L466.8,221.0L466.8,211.8L475.9,212.0L475.9,206.6L486.3,215.3L482.1,215.3L484.6,249.2L467.6,249.6L466.2,252.4L459.5,245.3L454.3,247.0L454.8,232.8L453.2,228.3Z"></path>
+<path d="M505.2,282.8L504.6,272.1L502.1,267.3L504.0,263.4L507.9,260.9L510.0,263.0L510.3,268.7L507.6,274.3L507.5,282.4L505.2,282.8Z"></path>
+<path d="M541.9,228.4L544.2,231.7L542.4,245.2L538.8,248.6L537.6,253.3L538.8,256.9L540.5,257.0L539.4,260.1L536.3,256.1L534.2,258.1L530.5,256.8L525.0,258.8L515.1,255.1L511.4,256.3L510.0,263.0L507.9,260.9L506.0,262.0L506.0,259.6L502.8,258.7L501.0,251.3L510.1,249.0L511.9,244.4L511.9,236.1L533.3,220.7L539.3,224.2L541.3,222.8L541.9,228.4Z"></path>
+<path d="M507.5,282.4L512.1,255.5L525.0,258.8L530.5,256.8L534.2,258.1L536.3,256.1L540.5,261.5L532.6,279.8L530.7,281.0L528.1,279.6L525.6,281.7L523.6,287.7L516.4,289.5L512.0,282.3L507.5,282.4Z"></path>
+<path d="M541.4,261.0L543.0,269.0L539.4,268.9L538.8,270.6L542.9,277.2L540.4,282.5L540.2,287.9L544.1,294.0L544.3,298.6L539.8,296.8L526.8,296.6L527.2,293.8L523.6,288.7L525.6,281.7L528.1,279.6L530.7,281.0L532.6,279.8L540.0,263.3L539.5,258.9L541.4,261.0Z"></path>
+<path d="M502.5,265.4L504.6,272.1L505.2,282.8L502.9,283.6L500.1,265.3L502.5,265.4Z"></path>
+<path d="M498.8,265.0L502.9,283.6L494.5,287.9L492.1,286.9L491.0,282.4L492.9,275.4L491.8,265.5L498.8,265.0Z"></path>
+<path d="M476.9,269.7L482.8,267.1L488.0,270.4L492.1,270.2L492.9,275.4L491.0,282.4L492.1,286.9L487.1,286.3L478.6,289.2L479.0,284.4L476.1,281.6L478.2,274.1L476.9,269.7Z"></path>
+<path d="M463.3,259.7L471.8,262.4L475.3,261.5L477.7,268.2L478.2,274.1L477.0,277.3L474.4,278.6L472.9,274.2L470.8,274.9L469.1,268.8L465.5,269.6L463.2,272.9L459.5,268.2L458.0,265.2L463.3,259.7Z"></path>
+<path d="M453.9,261.2L461.9,259.7L461.8,262.5L458.0,265.2L453.9,261.2Z"></path>
+<path d="M476.4,278.3L476.1,281.6L479.0,284.4L478.6,289.2L468.2,280.5L472.9,274.2L474.4,278.6L476.4,278.3Z"></path>
+<path d="M463.2,272.9L469.1,268.8L470.5,271.6L471.6,274.7L468.2,280.5L464.0,276.9L463.2,272.9Z"></path>
+<path d="M484.8,265.6L488.9,256.5L498.6,250.6L501.0,251.3L502.8,258.7L506.0,259.6L505.4,263.1L502.5,265.4L491.8,265.5L492.1,270.2L486.7,269.6L484.8,265.6Z"></path>
+<path d="M575.1,286.4L567.8,286.5L563.4,287.9L562.2,290.4L554.1,286.8L551.3,292.3L547.6,291.5L544.5,296.7L540.2,285.3L542.4,278.2L549.9,276.5L552.3,272.6L558.3,270.8L563.5,264.9L565.4,268.6L565.2,272.7L569.8,276.8L575.6,284.9L575.1,286.4Z"></path>
+<path d="M551.3,292.3L548.7,307.5L545.6,311.1L543.8,318.7L540.5,322.7L535.1,320.7L533.1,322.9L530.8,319.1L532.9,317.1L531.9,314.7L534.9,311.8L538.9,313.7L540.1,309.6L538.5,304.7L539.7,300.5L536.9,300.1L536.3,296.7L544.3,298.6L547.6,291.5L551.3,292.3Z"></path>
+<path d="M531.3,296.7L536.3,296.7L536.9,300.1L539.7,300.5L538.5,304.7L540.1,309.6L538.9,313.7L534.9,311.8L531.9,314.7L532.9,317.1L530.8,319.1L524.5,307.6L526.4,301.2L531.3,301.0L531.3,296.7Z"></path>
+<path d="M531.3,296.7L531.3,301.0L525.8,300.7L526.8,296.6L531.3,296.7Z"></path>
+<path d="M586.5,335.6L592.3,339.5L592.5,349.4L590.8,354.0L592.3,354.9L583.8,357.9L584.1,360.4L580.4,362.4L575.1,369.2L564.5,367.7L562.7,365.4L560.8,362.5L560.9,351.1L566.7,351.1L566.4,344.0L571.5,347.1L575.5,346.5L580.4,352.3L582.5,352.4L582.3,348.5L578.8,347.1L579.0,337.7L580.6,335.0L586.5,335.6Z"></path>
+<path d="M593.7,338.6L596.0,346.1L596.0,353.5L599.1,357.2L599.4,361.8L597.3,365.1L595.5,362.9L595.7,357.2L590.8,354.0L593.0,342.6L591.0,337.9L593.7,338.6Z"></path>
+<path d="M596.0,346.1L604.1,346.3L612.0,341.8L613.3,357.5L609.6,364.8L603.9,367.9L596.6,375.8L598.8,384.0L598.5,391.3L591.7,395.8L590.5,397.1L591.2,400.7L589.1,400.7L586.6,384.6L590.7,377.6L591.2,364.8L584.3,361.8L583.8,357.9L592.3,354.9L595.7,357.2L595.5,362.9L597.3,365.1L599.4,361.8L599.1,357.2L596.0,353.5L595.2,348.9L596.0,346.1Z"></path>
+<path d="M588.5,402.3L585.2,400.7L586.2,397.1L588.4,397.5L588.5,402.3Z"></path>
+<path d="M536.1,322.0L534.5,325.2L533.8,325.6L533.1,322.9L535.1,320.7L536.1,322.0ZM534.0,327.4L545.4,325.9L548.5,333.8L552.8,333.5L555.8,329.7L560.4,331.0L561.5,344.6L566.7,345.1L566.7,351.1L560.9,351.1L560.8,362.5L564.5,367.7L559.4,369.1L550.7,366.9L539.1,367.3L537.4,365.7L532.6,366.9L533.8,356.6L538.2,345.3L534.0,327.4Z"></path>
+<path d="M583.2,313.2L585.4,316.9L581.5,321.0L580.6,315.0L582.3,315.3L583.2,313.2Z"></path>
+<path d="M599.5,185.5L597.2,190.5L598.4,193.3L597.0,199.0L595.2,192.9L597.5,186.2L599.5,185.5Z"></path>
+<path d="M601.7,182.2L597.6,186.2L600.0,180.6L601.2,180.8L601.7,182.2Z"></path>
+<path d="M636.7,348.0L639.9,361.2L638.0,361.2L638.3,365.3L630.8,394.3L626.1,396.6L622.3,394.4L620.4,386.5L620.6,381.3L623.5,374.5L622.1,367.3L623.5,363.0L628.6,361.4L632.5,357.2L636.7,348.0Z"></path>
+<path d="M597.0,192.4L597.7,188.2L598.7,188.7L598.3,191.9L597.0,192.4Z"></path>
+<path d="M453.6,256.1L458.1,255.1L461.5,256.4L453.2,257.7L453.6,256.1Z"></path>
+<path d="M525.2,189.7L521.1,185.2L522.8,174.2L526.4,170.9L528.4,171.3L528.3,173.1L530.6,171.8L529.4,174.3L530.0,179.9L528.2,181.7L531.9,186.0L531.8,188.7L527.6,192.3L527.7,195.3L526.3,196.1L525.2,189.7Z"></path>
+<path d="M475.9,205.9L475.9,201.4L485.4,197.2L489.7,194.0L489.9,191.4L496.4,189.1L494.0,178.7L496.6,176.7L504.1,173.6L523.4,172.3L522.6,180.5L520.9,182.5L521.1,185.2L525.2,189.7L527.2,199.3L525.9,211.2L528.6,217.4L529.9,216.7L533.3,220.7L515.8,234.5L508.8,236.5L508.7,234.2L475.9,205.9Z"></path>
+<path d="M599.2,187.5L602.3,188.9L607.8,185.1L608.9,189.5L602.8,191.8L605.6,195.4L600.2,200.1L597.0,199.0L599.2,187.5Z"></path>
+<path d="M643.8,217.7L650.0,218.3L655.8,211.4L656.3,212.6L656.7,215.4L655.2,215.5L655.5,218.3L652.8,224.1L644.4,222.3L643.8,217.7Z"></path>
+<path d="M641.1,216.1L642.5,211.2L643.3,212.3L642.7,216.5L641.1,216.1Z"></path>
+<path d="M633.8,198.9L634.5,202.4L629.4,200.5L631.4,197.0L633.8,198.9Z"></path>
+<path d="M607.8,185.1L613.9,181.4L614.7,174.4L617.6,171.3L624.4,171.5L628.0,176.9L626.2,183.0L631.5,188.4L634.9,197.5L631.4,197.0L629.4,200.5L624.2,200.2L616.4,193.0L608.9,189.5L607.8,185.1Z"></path>
+<path d="M653.4,221.9L655.5,218.3L655.2,215.5L656.7,215.4L666.1,224.8L660.6,232.2L660.3,236.9L652.2,244.0L647.5,245.1L644.4,236.7L652.8,233.1L654.6,225.9L653.4,221.9ZM656.3,212.6L656.6,210.2L656.9,210.5L656.3,212.6Z"></path>
+<path d="M966.2,363.9L965.3,364.4L964.5,361.8L966.2,363.9ZM962.9,360.0L962.9,357.3L964.6,361.3L962.9,360.0Z"></path>
+<path d="M784.3,256.8L786.1,253.8L794.6,255.0L795.8,252.6L798.9,256.3L798.6,260.6L793.9,263.3L795.1,265.5L789.8,267.2L786.4,264.8L784.3,256.8Z"></path>
+<path d="M792.3,253.6L786.1,253.8L784.3,256.8L785.0,261.1L780.1,259.5L780.5,256.7L778.0,256.7L775.6,271.7L777.4,271.8L779.1,278.2L783.7,282.5L781.0,284.4L772.6,274.9L776.6,262.2L772.8,250.6L774.7,246.8L770.5,238.7L772.9,234.1L778.1,231.6L779.3,232.7L779.5,234.9L781.3,235.0L780.7,242.0L788.8,239.4L793.3,249.0L792.3,253.6Z"></path>
+<path d="M795.8,252.6L794.6,255.0L792.3,253.6L793.3,249.0L788.8,239.4L780.7,242.0L781.3,235.0L779.5,234.9L778.1,231.6L781.1,228.0L782.8,228.9L782.4,224.8L783.8,224.3L786.7,230.4L790.1,230.4L791.2,233.5L788.6,235.7L791.9,237.9L798.8,250.3L798.3,253.9L795.8,252.6Z"></path>
+<path d="M776.5,232.4L772.9,234.1L770.5,238.7L774.7,246.8L772.8,250.6L776.6,262.2L773.8,269.2L773.6,257.8L769.9,244.1L764.9,248.5L761.6,247.3L762.0,239.5L760.2,234.1L756.6,230.7L756.4,227.8L758.8,224.9L759.2,218.5L761.4,219.3L764.2,209.5L767.8,207.1L769.8,207.7L770.4,203.5L774.1,206.2L774.1,211.9L771.5,214.9L771.1,219.1L774.1,218.5L774.7,221.8L776.5,222.5L775.7,225.5L778.9,227.5L781.0,226.5L776.5,232.4Z"></path>
+<path d="M789.8,267.2L795.1,265.5L793.9,263.3L798.6,260.6L798.8,250.3L791.9,237.9L788.6,235.7L791.2,233.5L790.1,230.4L786.7,230.4L783.8,224.3L792.6,221.1L800.1,227.5L796.4,230.6L793.5,236.5L802.4,250.0L803.7,256.7L803.3,263.0L792.1,274.0L791.9,269.3L789.8,267.2Z"></path>
+<path d="M863.3,153.4L863.3,153.4L863.3,153.4L863.3,153.4ZM862.9,152.8L860.2,155.6L860.3,158.2L854.3,162.3L853.8,164.2L856.1,167.2L848.0,169.7L846.4,168.2L848.3,163.6L845.2,161.6L847.4,159.3L852.4,154.9L856.1,156.1L855.7,154.2L861.1,150.7L862.9,152.8Z"></path>
+<path d="M850.7,169.1L856.5,166.4L859.6,172.9L858.6,179.0L851.3,181.5L850.3,173.1L852.4,172.5L850.7,169.1Z"></path>
+<path d="M743.8,128.0L756.2,122.6L770.2,126.5L772.9,124.0L771.7,121.9L774.6,118.2L783.5,121.0L784.0,123.7L788.0,125.2L796.9,124.5L801.3,128.1L807.4,128.6L817.7,124.6L824.1,125.9L820.8,132.2L821.5,133.7L828.0,132.5L832.7,136.1L826.2,137.4L815.2,144.1L810.8,143.1L809.3,145.4L810.6,148.0L806.7,151.1L791.6,155.7L780.1,151.8L767.6,151.6L764.7,146.2L752.6,142.4L751.6,140.9L752.7,136.7L750.8,133.8L744.5,130.5L743.8,128.0Z"></path>
+<path d="M770.6,204.8L769.8,207.7L767.8,207.1L764.2,209.5L761.4,219.3L759.2,218.5L758.8,224.9L757.4,225.8L756.0,220.1L754.7,222.4L753.2,220.5L756.6,215.3L749.8,214.2L749.5,211.7L746.0,210.0L745.0,212.4L747.0,214.3L744.7,217.0L746.4,217.9L746.9,227.0L741.6,227.7L740.3,232.6L736.3,235.0L728.3,245.5L723.1,247.8L721.8,267.7L715.4,276.3L712.8,272.9L704.3,247.5L701.8,228.2L695.8,230.0L692.1,225.6L693.5,224.3L692.6,222.9L689.4,219.9L691.2,217.5L697.3,217.5L693.1,208.2L696.2,204.5L699.4,204.7L709.1,189.1L706.8,187.3L704.9,181.8L706.2,180.2L713.5,180.6L716.2,177.5L719.2,181.7L720.0,186.5L719.9,188.3L717.9,187.9L718.7,191.8L725.3,196.6L722.5,201.6L731.4,206.7L744.6,210.1L744.8,204.9L746.5,204.1L746.8,207.6L749.3,209.0L755.6,208.6L754.7,205.2L762.7,199.8L767.0,199.2L768.3,201.4L767.4,202.9L770.6,204.8Z"></path>
+<path d="M757.4,228.4L756.4,227.8L756.6,230.7L753.9,223.2L751.4,223.0L750.8,226.5L747.3,225.7L746.4,217.9L744.7,217.0L747.0,214.3L745.0,212.4L746.0,210.0L749.5,211.7L749.8,214.2L756.6,215.3L753.2,220.5L754.7,222.4L756.0,220.1L757.4,228.4Z"></path>
+<path d="M755.8,206.4L755.6,208.6L749.3,209.0L746.7,206.9L750.0,203.4L755.8,206.4Z"></path>
+<path d="M744.8,204.9L744.6,210.1L736.8,209.0L722.5,201.6L726.5,195.7L738.4,203.7L744.8,204.9Z"></path>
+<path d="M713.5,180.6L706.2,180.2L704.9,181.8L706.8,187.3L709.1,189.1L699.4,204.7L696.2,204.5L693.1,208.2L697.3,217.5L691.2,217.5L689.4,219.9L684.4,213.6L670.8,214.9L671.9,210.7L675.9,208.9L674.2,203.5L669.1,197.9L673.7,199.7L684.3,197.6L685.9,192.6L692.5,190.4L692.4,188.3L695.3,185.2L694.3,182.8L696.9,182.9L698.9,178.8L698.0,175.5L699.6,173.9L708.8,171.7L711.6,176.1L716.2,177.5L713.5,180.6Z"></path>
+<path d="M682.6,169.8L692.2,171.6L696.7,166.8L699.6,173.1L703.5,170.4L708.8,171.7L698.0,175.5L698.9,178.8L696.9,182.9L694.3,182.8L695.3,185.2L692.4,188.3L692.5,190.4L685.9,192.6L684.3,197.6L673.7,199.7L669.1,197.9L671.6,194.6L668.2,186.5L670.0,177.0L675.0,177.9L682.6,169.8Z"></path>
+<path d="M689.3,172.1L689.4,165.3L687.3,164.5L688.1,162.9L690.4,163.1L692.6,158.8L696.3,157.9L695.7,159.6L697.3,160.5L693.2,161.0L693.0,163.1L704.7,163.4L705.4,166.7L708.0,167.2L708.3,170.6L703.5,170.4L699.6,173.1L696.7,166.8L694.8,170.0L689.3,172.1Z"></path>
+<path d="M697.7,151.7L704.1,152.4L706.1,149.6L722.9,153.0L713.6,157.6L712.6,159.8L707.7,160.1L704.7,163.4L693.0,163.1L693.2,161.0L699.4,160.9L702.9,158.3L695.6,155.9L697.9,153.6L697.7,151.7Z"></path>
+<path d="M645.8,155.0L650.2,153.0L654.0,156.9L658.6,156.6L658.1,154.8L662.9,151.5L666.6,153.4L668.0,157.0L671.9,157.5L673.3,161.2L678.3,165.4L684.9,168.6L684.8,170.8L682.6,169.8L679.9,171.7L679.3,174.6L672.9,178.3L670.0,177.0L669.8,174.0L659.3,168.4L654.2,168.7L649.8,171.4L649.7,165.1L647.5,163.9L648.2,161.5L646.4,161.3L647.0,158.2L652.0,158.0L649.2,153.8L647.0,154.7L646.7,157.3L645.8,155.0Z"></path>
+<path d="M634.9,197.5L631.5,188.4L626.2,183.0L628.2,179.0L622.8,168.7L622.5,163.4L624.4,162.4L628.2,165.9L633.5,162.9L633.4,165.7L636.7,170.0L641.2,172.6L649.5,172.3L657.3,168.1L669.8,174.0L668.2,186.5L671.6,194.6L669.1,197.9L674.2,203.5L675.9,208.9L671.9,210.7L670.8,214.9L659.4,212.5L658.3,208.1L652.0,209.9L648.6,208.7L643.1,204.9L639.2,196.7L634.9,197.5Z"></path>
+<path d="M599.2,187.5L601.7,182.2L599.7,177.8L602.1,172.8L617.6,171.3L614.7,174.4L613.9,181.4L602.3,188.9L599.2,187.5Z"></path>
+<path d="M628.2,165.9L627.1,163.3L621.3,160.5L621.1,157.5L626.6,158.5L626.7,161.7L629.1,163.3L628.2,165.9Z"></path>
+<path d="M530.6,93.8L535.1,85.0L533.3,83.2L533.1,78.4L534.9,75.1L537.7,75.1L538.7,73.7L537.7,72.5L546.6,60.9L549.2,60.9L550.0,58.9L555.2,59.5L555.6,57.1L557.3,57.0L565.4,61.2L566.4,68.1L561.6,69.1L558.9,71.6L559.4,73.8L549.6,79.8L547.6,84.8L552.2,89.4L549.6,93.4L546.7,94.2L544.1,103.6L540.7,103.3L539.2,106.1L536.0,106.3L530.6,93.8Z"></path>
+<path d="M578.3,103.4L585.8,105.6L585.4,108.3L590.8,113.5L587.0,114.5L588.3,118.0L585.9,118.2L584.9,120.8L570.4,118.7L565.4,119.9L565.2,111.5L570.9,110.2L573.6,105.4L578.3,103.4Z"></path>
+<path d="M585.9,118.2L593.8,117.1L595.5,119.2L595.1,121.0L597.3,121.2L598.2,123.4L611.3,126.9L610.4,133.1L597.1,138.9L597.3,140.8L588.0,137.3L585.4,137.8L582.2,142.4L579.7,142.4L578.4,141.7L580.2,138.3L583.4,138.3L579.6,132.3L576.5,131.0L569.1,133.6L563.1,133.1L561.3,131.2L563.3,129.0L562.6,127.4L566.5,124.0L565.4,119.9L570.4,118.7L584.9,120.8L585.9,118.2Z"></path>
+<path d="M564.6,110.4L566.1,115.9L564.4,116.6L566.7,123.0L562.6,127.4L563.3,129.0L560.0,127.4L555.1,128.3L548.8,124.2L544.9,124.0L541.7,121.5L539.1,114.8L539.2,112.0L549.0,108.1L564.6,110.4Z"></path>
+<path d="M547.0,133.7L545.4,133.7L544.5,137.4L540.6,138.3L533.8,135.9L530.7,137.2L526.3,135.9L527.5,134.2L535.9,134.6L535.8,131.7L537.8,129.5L539.8,130.7L542.4,129.0L547.1,130.5L547.0,133.7Z"></path>
+<path d="M562.9,132.2L558.4,138.7L551.3,140.7L545.0,136.8L547.2,132.2L549.6,133.6L557.8,130.5L562.9,132.2Z"></path>
+<path d="M574.6,131.4L580.9,133.2L583.4,138.3L580.2,138.3L578.4,141.7L578.1,137.0L574.6,131.4Z"></path>
+<path d="M577.9,140.1L582.3,143.3L580.1,143.8L579.3,148.1L575.7,146.4L563.7,147.7L563.1,145.0L559.9,144.3L556.2,139.4L564.3,132.3L569.1,133.6L573.9,131.9L578.1,137.0L577.9,140.1Z"></path>
+<path d="M573.9,107.0L570.9,110.2L565.2,111.5L563.2,108.1L559.1,106.9L558.5,103.9L569.1,102.7L573.9,107.0Z"></path>
+<path d="M577.1,99.5L578.3,103.4L573.6,105.4L569.1,102.7L558.5,103.9L559.9,98.9L562.6,97.7L564.8,100.4L567.0,100.3L567.5,97.6L569.9,96.9L577.1,99.5Z"></path>
+<path d="M577.7,91.5L575.8,98.7L567.5,97.6L567.9,95.5L565.1,94.6L564.8,92.6L577.7,91.5Z"></path>
+<path d="M539.9,113.9L541.7,121.5L534.0,124.6L537.8,129.5L535.8,131.7L535.9,134.6L520.7,134.1L522.5,129.0L517.2,127.4L516.6,118.9L519.0,117.5L519.7,112.3L522.6,112.9L524.4,111.1L523.7,107.7L527.6,107.6L530.4,111.1L534.8,109.5L539.9,113.9Z"></path>
+<path d="M562.3,147.0L575.7,146.4L579.3,148.1L576.9,152.1L577.8,154.2L575.4,153.7L570.0,157.0L563.8,156.6L562.2,153.1L563.9,149.9L562.3,147.0Z"></path>
+<path d="M572.7,179.3L568.7,179.6L565.3,178.3L565.8,176.8L572.7,179.3ZM558.4,158.4L573.9,155.8L572.4,158.4L565.9,158.9L567.8,160.9L562.9,160.5L566.8,169.8L564.2,168.8L565.0,170.7L563.3,171.0L564.3,174.2L562.5,174.3L560.2,172.7L556.0,162.7L558.4,158.4Z"></path>
+<path d="M624.4,171.5L618.8,170.8L609.8,173.2L602.1,172.8L600.4,176.4L599.4,174.7L600.4,173.4L596.4,172.9L594.5,174.9L585.1,173.3L582.5,175.2L576.8,173.4L573.1,167.8L574.5,165.0L572.7,163.3L575.8,159.9L580.1,159.7L581.2,157.0L586.5,157.5L593.1,154.1L597.7,154.1L606.5,158.0L618.4,155.7L624.4,162.4L622.5,163.4L624.4,171.5ZM575.4,153.7L580.5,156.7L573.2,160.8L572.4,158.4L573.9,155.8L572.5,154.8L575.4,153.7Z"></path>
+<path d="M558.3,159.3L556.0,162.7L553.9,160.5L553.6,153.5L554.8,151.7L557.0,153.4L558.3,159.3Z"></path>
+<path d="M546.9,138.5L552.3,140.2L553.9,142.6L552.8,143.9L544.3,142.6L543.8,144.1L551.3,152.5L544.5,148.8L541.4,143.2L537.9,143.0L546.9,138.5Z"></path>
+<path d="M523.7,133.3L528.8,138.1L520.2,140.7L516.7,138.9L518.7,134.3L523.7,133.3Z"></path>
+<path d="M516.1,125.2L517.2,127.4L515.8,127.2L516.1,125.2Z"></path>
+<path d="M517.1,122.6L515.8,127.2L511.9,125.8L507.0,121.4L513.8,120.2L517.1,122.6Z"></path>
+<path d="M519.7,114.2L518.3,118.9L516.6,118.9L517.1,122.6L513.8,120.2L509.2,120.7L513.1,114.4L516.9,112.9L519.7,114.2Z"></path>
+<path d="M475.9,153.7L481.5,154.6L482.3,156.4L479.2,162.7L480.5,168.3L478.2,172.7L475.3,172.6L475.4,167.6L473.5,165.9L475.9,153.7Z"></path>
+<path d="M479.1,170.6L480.5,168.3L479.2,162.7L482.3,156.4L477.0,153.2L474.9,154.6L473.9,150.5L477.8,147.9L494.7,149.1L500.9,152.1L508.3,152.5L508.4,154.6L505.8,157.0L502.3,157.7L499.2,163.9L500.3,165.9L494.0,173.3L487.9,173.3L485.1,175.9L479.1,170.6Z"></path>
+<path d="M483.2,114.2L481.1,117.4L472.3,119.0L474.5,115.2L473.1,111.6L479.0,107.1L479.0,111.0L482.8,111.6L483.2,114.2Z"></path>
+<path d="M955.6,376.9L964.2,384.3L963.2,385.2L955.6,376.9Z"></path>
+<path d="M951.1,343.7L949.2,343.6L948.1,341.4L950.3,342.4L951.1,343.7ZM948.7,339.9L946.6,336.8L946.1,334.7L947.0,334.7L948.7,339.9ZM946.8,340.2L943.4,339.4L943.6,338.0L946.8,340.2ZM941.2,331.9L944.2,335.4L939.5,331.4L941.2,331.9ZM937.6,331.2L935.8,330.6L934.8,328.5L936.5,330.0L937.6,331.2Z"></path>
+<path d="M992.2,445.2L986.8,454.3L985.1,452.9L986.7,449.9L982.8,446.5L984.9,444.0L985.3,438.9L979.5,428.7L984.2,431.3L988.8,439.5L995.9,440.0L994.4,445.3L992.2,445.2ZM973.7,459.1L980.0,450.0L981.2,453.1L983.2,451.6L984.0,453.1L979.8,460.4L980.8,462.1L976.3,463.5L973.9,469.5L970.4,472.1L963.0,470.6L964.0,466.6L973.7,459.1Z"></path>
+<path d="M911.9,451.4L910.9,459.8L909.9,458.8L908.0,461.3L905.7,461.0L902.0,452.4L902.1,450.8L906.6,452.4L911.9,451.4ZM864.8,417.8L845.1,423.0L843.5,426.4L833.0,426.7L827.8,430.6L824.0,430.4L819.5,427.5L821.7,420.3L814.8,398.5L816.1,400.0L815.1,396.7L817.3,399.1L815.0,392.3L815.9,385.4L817.1,382.8L817.3,385.6L824.2,379.1L835.7,375.4L841.7,363.7L842.9,366.8L844.1,366.0L843.1,364.3L843.9,362.6L845.2,363.4L849.1,355.9L853.0,354.4L856.6,358.2L860.1,358.5L859.5,356.5L862.8,349.8L868.3,348.3L866.2,345.3L867.7,344.7L875.8,348.8L879.1,347.3L880.4,349.1L877.7,352.6L876.4,358.6L889.5,368.3L892.4,363.6L893.6,349.3L895.9,343.1L899.8,357.0L901.6,355.6L903.8,358.6L906.6,372.8L913.5,378.0L915.8,385.0L918.7,385.2L919.2,389.0L924.6,395.4L926.6,405.6L924.7,418.3L917.6,432.8L916.7,439.0L906.4,444.8L902.4,442.6L902.9,440.7L898.9,444.0L890.7,441.2L887.7,434.4L883.7,432.5L883.9,428.1L880.1,431.3L883.0,425.5L882.8,422.8L877.7,430.0L875.6,428.5L873.0,421.8L864.8,417.8Z"></path>
+<path d="M726.8,281.6L723.2,283.4L721.9,280.6L722.6,269.6L727.2,277.8L726.8,281.6Z"></path>
+<path d="M801.8,238.5L803.1,233.7L807.7,232.8L806.5,237.8L804.1,239.6L801.8,238.5ZM722.7,150.9L724.6,150.0L722.1,143.7L729.1,141.5L731.1,135.1L736.6,136.3L738.2,131.1L743.8,128.0L744.5,130.5L750.8,133.8L752.7,136.7L751.6,140.9L752.6,142.4L764.7,146.2L767.6,151.6L780.1,151.8L791.6,155.7L803.5,152.3L810.6,148.0L809.3,145.4L810.8,143.1L815.2,144.1L826.2,137.4L832.4,137.4L828.0,132.5L821.5,133.7L820.8,132.2L824.1,125.9L827.4,127.3L831.4,125.0L835.4,118.5L833.8,115.6L839.6,113.2L849.9,115.5L854.6,126.4L859.4,127.5L862.7,130.1L863.9,133.4L875.1,131.0L869.7,142.9L864.0,143.6L864.3,150.9L862.9,151.0L862.9,152.8L861.1,150.7L855.7,154.2L856.1,156.1L852.4,154.9L845.2,161.6L836.3,165.3L839.4,159.9L837.9,158.0L826.5,165.9L832.5,171.6L835.6,169.0L839.9,170.5L840.3,172.4L836.4,173.4L831.0,179.6L834.0,181.6L838.6,191.2L838.6,193.8L836.8,194.8L839.1,197.8L838.0,203.6L836.5,203.9L829.6,216.8L821.9,223.1L807.7,228.1L806.8,231.9L805.2,232.1L805.2,228.1L797.3,226.6L796.5,223.1L792.6,221.1L782.4,224.8L782.8,228.9L781.3,228.8L781.0,226.5L778.9,227.5L775.7,225.5L776.5,222.5L774.7,221.8L774.1,218.5L771.1,219.1L771.5,214.9L774.1,211.9L774.1,206.2L772.0,203.2L767.4,202.9L768.3,201.4L767.0,199.2L762.7,199.8L757.0,204.8L750.0,203.4L746.7,206.9L746.5,204.1L738.4,203.7L718.7,191.8L717.9,187.9L719.9,188.3L720.0,186.5L719.2,181.7L716.2,177.5L711.6,176.1L708.3,170.6L708.0,167.2L705.4,166.7L704.7,163.4L707.7,160.1L712.6,159.8L713.6,157.6L722.6,153.8L722.7,150.9Z"></path>
+<path d="M838.8,215.2L835.4,226.0L833.6,220.3L837.5,214.1L838.8,215.2Z"></path>
+<path d="M519.0,139.9L533.8,135.9L538.4,138.0L538.7,141.3L534.2,142.1L535.0,146.7L542.1,154.4L544.2,154.3L544.1,155.9L551.0,160.1L550.8,162.1L546.9,159.8L545.7,162.1L547.7,163.4L547.4,165.3L544.7,168.6L543.6,168.9L544.7,165.1L542.8,161.2L531.1,152.9L528.3,147.3L524.7,145.7L520.7,148.1L521.0,146.6L519.5,146.1L519.0,139.9ZM543.1,167.7L541.9,173.5L534.5,169.9L534.9,168.1L543.1,167.7ZM525.6,157.0L527.2,159.6L526.9,164.3L524.5,165.3L522.7,158.0L525.6,157.0Z"></path>
+<path d="M525.8,108.2L522.6,105.7L522.5,102.1L529.4,97.8L528.5,100.8L530.3,102.4L525.8,108.2ZM535.3,105.4L533.6,108.3L530.3,104.8L534.4,103.6L535.3,105.4Z"></path>
+<path d="M482.8,111.6L479.0,111.0L479.0,107.1L484.3,109.2L482.8,111.6ZM491.4,113.3L491.8,111.2L489.9,109.0L485.9,107.4L486.0,104.8L484.5,106.5L482.9,101.2L486.1,94.6L491.7,94.6L488.7,98.4L494.6,98.0L491.3,104.1L494.2,104.3L501.3,115.0L504.7,115.7L502.9,119.0L504.0,120.9L501.5,122.8L484.0,124.9L490.5,120.4L485.4,118.4L488.3,117.3L486.7,115.3L487.3,113.0L491.4,113.3Z"></path>
+<path d="M459.1,68.8L462.2,71.3L448.2,77.1L436.8,75.5L439.5,73.9L433.5,72.1L438.3,70.4L432.4,69.5L434.3,67.2L438.5,66.7L442.8,69.1L447.1,67.1L459.7,66.5L459.1,68.8Z"></path>
+<path d="M628.2,155.2L632.8,157.3L635.0,154.9L640.0,160.5L637.7,160.7L635.8,167.4L633.4,165.7L633.5,162.9L629.2,165.8L629.1,163.3L626.7,161.7L627.5,160.6L624.9,156.9L629.2,157.6L628.2,155.2ZM628.2,165.9L624.9,163.8L624.4,162.4L627.1,163.3L628.2,165.9Z"></path>
+<path d="M611.3,148.6L626.3,152.4L629.5,157.1L615.4,155.9L615.1,151.9L611.3,148.6Z"></path>
+<path d="M834.2,256.5L837.6,258.0L836.8,261.1L835.6,259.3L834.2,256.5ZM839.9,270.0L841.5,265.8L843.1,265.6L842.6,268.0L844.7,264.5L841.7,272.5L839.9,270.0ZM850.6,271.5L850.5,282.3L849.5,278.7L848.2,280.5L848.3,284.8L845.1,282.7L845.1,278.4L843.4,276.7L838.7,279.0L843.0,273.7L844.0,275.3L848.5,272.6L848.4,269.8L850.6,271.5ZM825.5,274.8L830.5,267.6L832.0,264.1L832.5,267.0L825.5,274.8ZM839.6,238.6L840.3,243.5L838.0,247.7L838.1,253.4L844.3,255.4L844.7,259.9L841.5,256.2L840.8,257.5L839.0,255.4L835.1,255.1L836.1,252.7L833.5,251.1L833.0,246.1L834.1,247.3L835.3,238.5L839.6,238.6ZM838.6,262.2L842.0,263.3L838.9,267.4L839.0,263.9L838.6,262.2ZM849.4,265.2L847.3,264.3L848.0,267.7L846.7,268.5L845.3,263.6L846.9,262.5L845.2,259.8L847.9,259.9L849.4,265.2Z"></path>
+<path d="M778.5,281.0L781.0,284.4L783.7,282.5L786.0,285.0L789.5,300.2L787.6,300.4L781.6,294.9L778.3,285.8L778.5,281.0ZM829.5,288.8L821.8,289.4L818.4,299.7L807.0,302.1L805.1,300.0L804.6,297.6L808.8,298.2L809.4,295.2L813.9,293.7L817.2,288.6L818.5,290.5L820.4,289.3L820.7,285.3L824.2,280.0L831.1,285.4L829.0,287.0L829.5,288.8Z"></path>
+<path d="M820.7,285.3L818.5,290.5L817.2,288.6L820.7,285.3Z"></path>
+<path d="M538.4,138.0L545.0,136.8L546.0,138.1L542.6,141.8L538.1,141.7L538.4,138.0Z"></path>
+<path d="M579.0,59.7L583.3,62.0L580.7,64.8L583.9,68.8L582.1,71.9L584.6,74.6L583.4,76.9L587.5,79.4L586.5,81.2L578.0,87.8L563.5,90.2L559.2,87.1L559.8,83.5L558.5,80.3L559.8,78.2L570.6,71.3L565.5,66.7L565.4,61.2L557.3,57.0L568.7,58.6L572.7,54.4L577.0,53.2L580.6,54.6L579.0,59.7Z"></path>
+<path d="M562.7,128.8L560.8,131.5L557.8,130.5L549.6,133.6L546.9,131.0L553.7,127.1L560.0,127.4L562.7,128.8Z"></path>
+<path d="M539.7,121.5L548.8,124.2L552.4,127.3L547.1,130.5L542.4,129.0L539.8,130.7L534.8,127.1L534.0,124.6L539.7,121.5Z"></path>
+<path d="M600.9,251.7L602.4,244.0L606.7,240.3L609.1,247.7L619.7,259.3L617.6,259.8L611.2,252.8L605.3,251.2L604.4,253.9L600.9,251.7Z"></path>
+<path d="M891.6,167.9L889.6,178.8L881.2,180.7L877.2,184.8L875.3,183.4L875.2,180.8L863.9,183.3L866.7,185.9L864.8,192.0L863.0,193.5L861.7,192.2L862.4,188.9L859.5,185.4L868.4,177.8L876.9,177.4L879.8,171.0L881.6,172.8L887.3,167.8L889.0,163.4L888.6,159.4L889.7,157.1L892.7,156.4L894.1,164.3L891.6,167.9ZM903.7,145.7L904.3,149.7L900.2,150.7L897.7,154.2L893.4,151.8L891.9,155.7L888.8,155.8L888.4,152.2L889.8,149.4L892.7,149.2L894.4,141.5L899.8,146.4L903.7,145.7ZM869.2,182.7L872.0,181.6L874.4,183.6L872.8,185.8L870.2,185.4L869.5,187.5L867.7,186.5L869.2,182.7Z"></path>
+<path d="M339.2,379.2L339.1,384.0L345.0,385.0L346.1,390.7L349.2,391.0L347.8,400.3L345.3,403.0L337.2,402.1L339.5,395.1L331.0,390.5L325.9,384.6L328.4,375.2L335.8,374.2L339.2,379.2Z"></path>
+<path d="M644.4,236.7L647.5,245.1L645.5,246.1L644.9,248.9L625.0,259.3L620.8,259.5L618.3,250.3L620.5,241.8L630.6,244.0L636.4,238.1L644.4,236.7Z"></path>
+<path d="M600.2,200.1L605.6,195.4L602.8,191.8L608.9,189.5L616.4,193.0L624.2,200.2L634.5,202.4L639.3,209.1L639.6,213.0L642.7,216.5L644.4,222.3L653.4,223.4L654.6,225.9L652.8,233.1L636.4,238.1L630.6,244.0L620.5,241.8L618.8,246.2L613.7,234.9L608.7,228.5L606.9,219.9L604.1,217.7L597.6,204.2L596.2,204.2L597.1,199.5L600.2,200.1Z"></path>
+<path d="M594.4,179.1L591.5,177.9L596.0,176.9L594.4,179.1Z"></path>
+<path d="M589.6,178.9L592.7,178.7L594.5,179.4L591.6,180.8L589.6,178.9Z"></path>
+<path d="M494.0,178.7L496.4,189.1L489.9,191.4L489.7,194.0L485.4,197.2L475.9,201.4L475.6,207.6L468.4,208.4L465.3,216.0L461.4,219.9L459.0,227.7L452.7,228.0L459.9,210.7L473.4,197.5L472.7,193.0L474.2,188.0L480.8,182.5L483.5,176.6L494.0,178.7Z"></path>
+<path d="M602.4,225.9L569.4,225.9L568.6,197.1L569.9,191.6L580.3,194.1L586.0,191.7L588.8,193.9L595.2,192.9L597.0,199.0L594.9,205.0L589.8,198.1L599.1,219.0L598.7,222.0L602.4,225.9Z"></path>
+<path d="M569.4,233.1L566.3,233.1L566.2,234.6L544.1,220.9L539.3,224.2L529.9,216.7L528.6,217.4L525.9,211.2L527.6,192.3L531.8,188.7L531.9,186.0L542.3,189.1L543.6,192.3L553.0,196.3L555.7,193.7L555.1,191.0L557.9,187.5L569.2,190.4L569.4,233.1Z"></path>
+<path d="M624.9,286.9L621.3,287.0L616.3,290.8L613.2,289.6L609.9,292.6L605.9,291.9L600.4,288.9L596.4,281.2L591.5,276.9L594.0,274.8L595.2,266.7L599.6,259.7L601.2,253.1L604.4,253.9L605.3,251.2L613.6,254.2L617.6,259.8L616.0,265.2L618.8,265.6L618.2,266.9L621.3,271.9L632.7,276.1L624.9,286.9Z"></path>
+<path d="M616.7,261.4L620.3,260.4L618.8,265.6L616.0,265.2L616.7,261.4Z"></path>
+<path d="M636.0,263.9L635.9,270.9L632.7,276.1L621.3,271.9L618.2,266.9L619.8,263.7L622.5,267.4L636.0,263.9Z"></path>
+<path d="M594.2,308.2L582.2,309.6L583.0,302.7L586.6,296.9L585.5,296.4L585.6,292.2L594.5,289.6L597.3,298.0L594.1,304.4L594.2,308.2Z"></path>
+<path d="M584.5,308.9L585.4,313.0L580.6,315.0L582.2,309.6L584.5,308.9Z"></path>
+<path d="M551.6,151.9L543.8,144.1L544.3,142.6L553.8,143.9L554.0,148.6L551.6,151.9Z"></path>
+<path d="M563.6,154.2L563.8,156.6L560.2,158.0L558.4,158.4L556.8,155.9L559.3,153.5L563.6,154.2Z"></path>
+<path d="M552.3,140.2L556.2,139.4L559.9,144.3L563.1,145.0L562.3,147.0L563.9,149.9L562.6,152.6L559.9,153.3L560.5,151.8L557.8,149.6L556.3,151.3L553.4,148.7L554.4,146.9L552.3,140.2Z"></path>
+<path d="M556.5,151.0L553.8,154.6L551.3,152.5L553.4,148.7L556.5,151.0Z"></path>
+<path d="M557.5,154.8L555.8,152.1L557.3,149.8L560.5,151.8L557.5,154.8Z"></path>
+<path d="M330.3,265.8L330.7,268.6L327.9,268.6L328.7,266.2L330.3,265.8Z"></path>
+<path d="M585.6,292.2L582.5,288.3L577.7,289.0L566.4,273.9L568.2,272.8L569.6,268.0L571.6,267.5L574.3,270.9L580.5,271.1L583.3,267.9L587.1,269.6L590.0,265.1L589.1,261.9L592.2,261.1L594.4,273.7L591.5,276.9L594.7,278.9L598.1,285.1L592.8,291.2L585.6,292.2Z"></path>
+              </g>
+              <g class="follow-pol-continent-labels" fill="#9cacc0" font-size="15" font-family="PingFang SC,Microsoft YaHei,sans-serif" opacity=".62" font-weight="500">
+                <text x="92" y="130">NORTH AMERICA</text>
+                <text x="205" y="326">SOUTH AMERICA</text>
+                <text x="470" y="142">EUROPE</text>
+                <text x="476" y="272">AFRICA</text>
+                <text x="680" y="162">ASIA</text>
+                <text x="835" y="388">OCEANIA</text>
+              </g>
+            </svg>
+            <div class="follow-pol-canvas" id="followPolMapCanvas"></div>
+            <button class="follow-pol-reset" id="followPolReset" type="button" onclick="resetPolZoom()" aria-label="缩小到全球视图" title="缩小到全球视图">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="M7.5 10.5h6M15.5 15.5 21 21"></path></svg>
+            </button>
+          </div>
+          <div class="follow-pol-rank">
+            <div class="follow-pol-rank-title">Top POL <span class="follow-pol-rank-sub" id="followPolRankSub"></span></div>
+            <div class="follow-pol-rank-list" id="followPolRankList"></div>
+          </div>
+        </div>
+      </div>`;
+    }
+    function setFollowPolMetric(btn,metric){
+      followPolMetric=metric;
+      document.querySelectorAll('.follow-pol-metrics button').forEach(b=>b.classList.toggle('on',b===btn));
+      if(followDashboardExpanded) renderPolHotspot(getProjectRows());
+    }
+    function parseFreightM(value){
+      if(!value||value==='—') return 0;
+      const m=String(value).match(/([\d.]+)\s*M/i);
+      if(m) return Number(m[1])||0;
+      const n=Number(String(value).replace(/[^\d.]/g,''));
+      return Number.isFinite(n)?n/1000000:0;
+    }
+    function inferPolMarket(row){
+      if(row.market&&row.market!=='—') return row.market;
+      const c=String(row.cargoType||'').toLowerCase();
+      if(/wind|nacelle|blade/.test(c)) return 'Wind';
+      if(/fpso|rig|offshore/.test(c)) return 'Offshore';
+      if(/jacket|steel/.test(c)) return 'Oil & Gas';
+      if(/float-over|voyage|multiple|time/.test(c)) return 'Project Cargo';
+      return '—';
+    }
+    function followPolPortName(row){
+      if(myCargoSegment==='proj' && FOLLOW_PROJECT_POL_DISTRIBUTION[row.pid]){
+        return FOLLOW_PROJECT_POL_DISTRIBUTION[row.pid];
+      }
+      return row.dashboardPol||row.pol;
+    }
+    function buildPolMetrics(rows){
+      const grouped=new Map();
+      rows.forEach(r=>{
+        const name=followPolPortName(r);
+        const meta=FOLLOW_POL_META[name];
+        if(!name||name==='—'||!meta) return;
+        if(!grouped.has(name)) grouped.set(name,{name,country:meta.country,lon:meta.lon,lat:meta.lat,projectCount:0,freightM:0,markets:new Map()});
+        const item=grouped.get(name);
+        item.projectCount+=1;
+        item.freightM+=parseFreightM(r.freight);
+        const market=inferPolMarket(r);
+        item.markets.set(market,(item.markets.get(market)||0)+1);
+      });
+      return [...grouped.values()].map(item=>{
+        const mainMarket=[...item.markets.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
+        return {...item,mainMarket};
+      });
+    }
+    function polMetricValue(item,metric){ return metric==='freight'?item.freightM:item.projectCount; }
+    function polMetricText(item,metric){
+      if(metric==='freight') return item.freightM>0?`$${item.freightM.toFixed(2)}M`:'—';
+      return `${item.projectCount}`;
+    }
+    function polHeatColor(val,max){
+      const t=max?val/max:0;
+      if(t>.82) return '#e67755';
+      if(t>.62) return '#e9c85c';
+      if(t>.38) return '#55b9c8';
+      return '#5b91d8';
+    }
+    function polViewRange(){
+      if(!followPolZoom) return {xMin:-180,xMax:180,yMin:-60,yMax:85};
+      const z=followPolZoom.zoom||3.2;
+      const halfLon=180/z;
+      const halfLat=72.5/z;
+      let xMin=followPolZoom.lon-halfLon, xMax=followPolZoom.lon+halfLon;
+      let yMin=followPolZoom.lat-halfLat, yMax=followPolZoom.lat+halfLat;
+      if(xMin<-180){xMax+=-180-xMin;xMin=-180;}
+      if(xMax>180){xMin-=xMax-180;xMax=180;}
+      if(yMin<-60){yMax+=-60-yMin;yMin=-60;}
+      if(yMax>85){yMin-=yMax-85;yMax=85;}
+      return {xMin,xMax,yMin,yMax};
+    }
+    function applyPolBackgroundZoom(){
+      const map=document.querySelector('.follow-pol-map');
+      const bg=document.querySelector('.follow-pol-bg');
+      if(!map||!bg) return;
+      if(!followPolZoom){
+        bg.style.transform='none';
+        map.classList.remove('is-zoomed');
+        return;
+      }
+      const rect=map.getBoundingClientRect();
+      const z=followPolZoom.zoom||3.2;
+      const x=(followPolZoom.lon+180)/360*rect.width;
+      const y=(85-followPolZoom.lat)/145*rect.height;
+      const tx=rect.width/2-z*x;
+      const ty=rect.height/2-z*y;
+      bg.style.transform=`matrix(${z},0,0,${z},${tx},${ty})`;
+      map.classList.add('is-zoomed');
+    }
+    function resetPolZoom(){
+      followPolZoom=null;
+      if(followChartRefs.polMap) followChartRefs.polMap.dispatchAction({type:'hideTip'});
+      renderPolHotspot(getProjectRows());
+    }
+    function zoomPolToPort(d){
+      if(!d) return;
+      followPolZoom={lon:d.lon,lat:d.lat,zoom:3.2,name:d.name};
+      if(followChartRefs.polMap) followChartRefs.polMap.dispatchAction({type:'hideTip'});
+      renderPolHotspot(getProjectRows());
+    }
+    function renderPolHotspot(rows){
+      const list=buildPolMetrics(rows);
+      const metric='count';
+      if(followPolZoom && !list.some(x=>x.name===followPolZoom.name)) followPolZoom=null;
+      const totalMetric=list.reduce((s,x)=>s+polMetricValue(x,metric),0);
+      const ranked=[...list].sort((a,b)=>polMetricValue(b,metric)-polMetricValue(a,metric)||a.name.localeCompare(b.name));
+      const max=Math.max(1,...ranked.map(x=>polMetricValue(x,metric)));
+      const haloData=ranked.map(d=>({name:d.name,value:[d.lon,d.lat,polMetricValue(d,metric)],raw:d}));
+      const bubbleData=ranked.map(d=>({name:d.name,value:[d.lon,d.lat,polMetricValue(d,metric)],raw:d}));
+      const view=polViewRange();
+      followChartRefs.polMap.setOption({
+        animationDuration:220,
+        tooltip:{
+          trigger:'item',
+          confine:true,
+          backgroundColor:'rgba(26,58,92,.96)',borderWidth:0,padding:[9,11],textStyle:{color:'#fff',fontSize:11.5},
+          extraCssText:'max-width:240px;box-shadow:0 6px 18px rgba(21,48,77,.22);',
+          formatter:p=>{
+            const d=p.data&&p.data.raw;
+            if(!d) return '';
+            const share=totalMetric?((polMetricValue(d,metric)/totalMetric)*100).toFixed(1):'0.0';
+            const title=`<div style="font-size:12.5px;font-weight:700;color:#cfe6ff;margin-bottom:3px">${d.name}</div>`;
+            const country=`<div>Country：${d.country}</div>`;
+            const shareLine=`<div>当前指标占比：${share}%</div>`;
+            const countLabel=myCargoSegment==='spot'?'Cargo Count':'Project Count';
+            return `<div style="min-width:178px;line-height:1.65">${title}${country}<div>${countLabel}：${d.projectCount}</div>${shareLine}</div>`;
+          }
+        },
+        grid:{left:0,right:0,top:0,bottom:0,containLabel:false},
+        xAxis:{type:'value',min:view.xMin,max:view.xMax,show:false},
+        yAxis:{type:'value',min:view.yMin,max:view.yMax,show:false},
+        series:[
+          {
+            name:'Heat',type:'scatter',coordinateSystem:'cartesian2d',silent:true,z:1,data:haloData,
+            symbolSize:v=>32+34*(v[2]/max),
+            itemStyle:{color:p=>polHeatColor(p.value[2],max),opacity:.17,shadowBlur:24,shadowColor:p=>polHeatColor(p.value[2],max)}
+          },
+          {
+            name:'POL',type:'scatter',coordinateSystem:'cartesian2d',z:3,data:bubbleData,cursor:'pointer',
+            symbolSize:v=>10+15*(v[2]/max),
+            itemStyle:{color:p=>polHeatColor(p.value[2],max),opacity:.88,borderColor:'#fff',borderWidth:2,shadowBlur:7,shadowColor:'rgba(55,102,157,.22)'},
+            emphasis:{scale:1.15,itemStyle:{borderWidth:3,shadowBlur:12}},
+            label:{show:false}
+          }
+        ]
+      },true);
+      followChartRefs.polMap.off('click');
+      followChartRefs.polMap.on('click',params=>{
+        if(params.seriesName==='POL' && params.data && params.data.raw) zoomPolToPort(params.data.raw);
+      });
+      requestAnimationFrame(applyPolBackgroundZoom);
+      const rankHost=document.getElementById('followPolRankList');
+      const sub=document.getElementById('followPolRankSub');
+      if(sub) sub.textContent='';
+      if(rankHost){
+        rankHost.innerHTML=ranked.slice(0,8).map((d,i)=>`<div class="follow-pol-rank-row" title="${d.name}, ${d.country}"><span class="follow-pol-rank-no">${i+1}</span><span class="follow-pol-rank-info"><span class="follow-pol-rank-name">${d.name}</span><span class="follow-pol-rank-country">${d.country} · ${d.mainMarket}</span></span><span class="follow-pol-rank-val">${polMetricText(d,metric)}</span></div>`).join('') || '<div style="font-size:12px;color:#9eb0c1;padding:8px 2px;">暂无 POL 数据</div>';
+      }
+    }
+    const VESSEL_TYPE_MAP={
+      'TAI AN KOU':'K-Class','KANG SHENG KOU':'K-Class','HUA XING LONG':'26K-Class','HUA SHENG LONG':'26K-Class',
+      'HUA HAILONG':'30K/40K','ZHI YUAN KOU':'30K/40K',
+      'XIANG HE KOU':'X-Class/50K','XIANG YUN KOU':'X-Class/50K','XIANG RUI KOU':'X-Class/50K','XIANG AN KOU':'X-Class/50K','ZHENHUA 33':'X-Class/50K','RED ZED I':'X-Class/50K','HUA YANG LONG':'X-Class/50K',
+      'XIANG TAI KOU':'Super X',
+      'HUA RUI LONG':'80K','XIN YAO HUA':'80K',
+      'XIN GUANG HUA':'100K'
+    };
+    function followVesselName(r){ return r.dashboardVessel||r.vessel||'—'; }
+    function followVesselType(r){
+      const name=followVesselName(r);
+      if(name==='—') return '未指定船型';
+      return VESSEL_TYPE_MAP[name]||'其他船型';
+    }
+    function ensureVesselShell(){
+      if(document.getElementById('followVesselBarInner')) return;
+      const titleFilter=document.getElementById('followVesselTitleFilter');
+      if(titleFilter) titleFilter.innerHTML=`<div class="follow-vessel-dimension-tabs" role="tablist" aria-label="船舶排名维度"><button class="follow-vessel-dimension-tab on" id="followVesselTypeTab" type="button" onclick="setFollowVesselMode('type')">船型</button><button class="follow-vessel-dimension-tab" id="followVesselNameTab" type="button" onclick="setFollowVesselMode('name')">船名</button></div>`;
+      followVesselHost.innerHTML=`<div class="follow-vessel-shell">
+        <div class="follow-vessel-drill-head" id="followVesselDrillHead"><span class="follow-vessel-drill-label" id="followVesselDrillLabel"></span><button class="follow-vessel-drill-back" type="button" onclick="backToVesselTypeRanking()">← 返回船型排名</button></div>
+        <div id="followVesselBarInner" class="follow-vessel-bar"></div>
+        <div id="followVesselDetail" class="follow-vessel-detail"><div class="follow-vessel-detail-top"><span class="follow-vessel-detail-title" id="followVesselDetailTitle"></span><span class="follow-vessel-back" onclick="backFollowVessel()">← 返回排行</span></div><div class="follow-vessel-table-wrap"><table class="follow-vessel-table"><thead><tr><th>PID</th><th>Charterer</th><th>Cargo Type</th><th>POL</th><th>LAYCAN</th><th>PIC</th></tr></thead><tbody id="followVesselDetailBody"></tbody></table></div></div>
+      </div>`;
+    }
+    function setFollowVesselMode(mode){
+      followVesselMode=mode;
+      followVesselDrillType=null;
+      document.getElementById('followVesselTypeTab')?.classList.toggle('on',mode==='type');
+      document.getElementById('followVesselNameTab')?.classList.toggle('on',mode==='name');
+      if(followDashboardExpanded) renderVesselBar(getProjectRows());
+    }
+    function backToVesselTypeRanking(){
+      followVesselMode='type';
+      followVesselDrillType=null;
+      document.getElementById('followVesselTypeTab')?.classList.add('on');
+      document.getElementById('followVesselNameTab')?.classList.remove('on');
+      renderVesselBar(getProjectRows());
+    }
+    function updateVesselDrillHead(){
+      const head=document.getElementById('followVesselDrillHead');
+      const label=document.getElementById('followVesselDrillLabel');
+      const show=followVesselMode==='type'&&!!followVesselDrillType;
+      if(head) head.classList.toggle('show',show);
+      if(label) label.textContent=show?`${followVesselDrillType} → 船名排名`:'';
+    }
+    function backFollowVessel(){
+      const bar=document.getElementById('followVesselBarInner');
+      const detail=document.getElementById('followVesselDetail');
+      if(bar) bar.style.display='block';
+      if(detail) detail.style.display='none';
+      updateVesselDrillHead();
+      if(followChartRefs.vesselBar) followChartRefs.vesselBar.resize();
+    }
+    function renderFollowVesselDetail(name,rows){
+      document.getElementById('followVesselBarInner').style.display='none';
+      document.getElementById('followVesselDrillHead')?.classList.remove('show');
+      document.getElementById('followVesselDetail').style.display='block';
+      document.getElementById('followVesselDetailTitle').textContent=`船名：${name}　共 ${rows.length} 个项目`;
+      document.getElementById('followVesselDetailBody').innerHTML=rows.map(r=>`<tr><td><span class="pid-link" title="点击查看详情" onclick="viewCargoDetail(event,'${myCargoSegment}','${r.pid}')">${r.pid}</span></td><td>${r.charterer}</td><td>${r.cargoType||'—'}</td><td>${r.dashboardPol||r.pol||'—'}</td><td>${r.laycan}</td><td>${r.pic}</td></tr>`).join('');
+    }
+    function renderVesselBar(rows){
+      const vesselRows=rows.filter(r=>followVesselName(r)!=='—');
+      backFollowVessel();
+      updateVesselDrillHead();
+      document.getElementById('followVesselTypeTab')?.classList.toggle('on',followVesselMode==='type');
+      document.getElementById('followVesselNameTab')?.classList.toggle('on',followVesselMode==='name');
+
+      let ranking=[];
+      let clickLevel='vessel';
+      if(followVesselMode==='name'){
+        ranking=aggregate(vesselRows,r=>followVesselName(r)).sort((a,b)=>b.value-a.value||a.name.localeCompare(b.name));
+      }else if(followVesselDrillType){
+        const typeRows=vesselRows.filter(r=>followVesselType(r)===followVesselDrillType);
+        ranking=aggregate(typeRows,r=>followVesselName(r)).sort((a,b)=>b.value-a.value||a.name.localeCompare(b.name));
+      }else{
+        ranking=aggregate(vesselRows,r=>followVesselType(r)).sort((a,b)=>b.value-a.value||a.name.localeCompare(b.name));
+        clickLevel='type';
+      }
+      ranking=ranking.slice(0,8);
+      const vesselMax=Math.max(1,...ranking.map(x=>x.value));
+      const vesselAxisMax=Math.max(vesselMax+1,Math.ceil(vesselMax*1.28));
+      followChartRefs.vesselBar.setOption({
+        tooltip:{trigger:'item',backgroundColor:'rgba(255,255,255,.98)',borderColor:'#e2e8f0',borderWidth:1,textStyle:{color:'#56616d',fontSize:11.5},formatter:p=>p.name+'：'+p.value+' 个项目'},
+        grid:{left:12,right:30,top:8,bottom:5,containLabel:true},
+        xAxis:{type:'value',min:0,max:vesselAxisMax,minInterval:1,axisLabel:{show:false},splitLine:{show:false},axisLine:{show:false},axisTick:{show:false}},
+        yAxis:{type:'category',data:ranking.map(x=>x.name).reverse(),axisLine:{show:false},axisTick:{show:false},axisLabel:{color:'#66798d',fontSize:12,margin:10,width:125,overflow:'truncate'}},
+        series:[{type:'bar',data:ranking.map(x=>x.value).reverse(),barWidth:14,barCategoryGap:'42%',itemStyle:{borderRadius:[0,7,7,0],color:'#6f9fd5'},label:{show:true,position:'right',distance:6,formatter:'{c} 个',color:'#4a72a8',fontSize:11.5,fontWeight:500}}]
+      },true);
+      followChartRefs.vesselBar.off('click');
+      followChartRefs.vesselBar.on('click',p=>{
+        if(clickLevel==='type'){
+          followVesselDrillType=p.name;
+          renderVesselBar(rows);
+          return;
+        }
+        const rowsByVessel=vesselRows.filter(r=>followVesselName(r)===p.name && (!followVesselDrillType || followVesselType(r)===followVesselDrillType));
+        if(rowsByVessel.length) renderFollowVesselDetail(p.name,rowsByVessel);
+      });
+    }
+    function renderFollowDashboard(){
+      if(!followDashboardExpanded) return;
+      if(!ensureFollowCharts()) return;
+      const rows=getProjectRows();
+      document.getElementById('followTypeTitle').textContent=myCargoSegment==='spot'?'Cargo Type 分布':'Project Type 分布';
+      renderFollowTypePanel(rows);
+      renderFollowStatusPanel(rows);
+      renderPolHotspot(rows);
+      renderVesselBar(rows);
+      requestAnimationFrame(()=>Object.values(followChartRefs).forEach(c=>c&&c.resize&&c.resize()));
+    }
+    function renderMySpotCargo(){
+      const source=myCargoSegment==='spot'?MY_SPOT_CARGO:MY_PROJECT_CARGO;
+      updateMineCounts('spot',source);
+      const rows=getProjectRows();
+      const showRows=pageRows(rows,'project');
+      const tb=document.getElementById('mySpotCargoBody');
+      const table=tb?tb.closest('table'):null;
+      const head=document.getElementById('followCargoHeadRow');
+      const isProject=myCargoSegment==='proj';
+
+      if(table) table.classList.toggle('project-cargo-mode',isProject);
+      if(head){
+        head.innerHTML=isProject
+          ? '<th>No.</th><th>Priority</th><th>Project Market</th><th>Project Type</th><th>Project Name</th><th>Project Status</th><th>End Client</th><th>Direct Client</th><th>Project Period</th><th>PID</th><th>PIC</th><th>Last Updated</th>'
+          : '<th>No.</th><th>Priority</th><th>PID</th><th>Status</th><th>Charterer</th><th>Freight</th><th>Cargo Type</th><th>LAYCAN</th><th>VESSEL</th><th>POL</th><th>POD</th><th>PIC</th><th>Last Updated</th>';
+      }
+
+      if(tb){
+        if(!showRows.length){
+          tb.innerHTML=`<tr><td colspan="${isProject?12:13}" class="hp-empty">暂无当前用户相关货盘</td></tr>`;
+        }else if(isProject){
+          tb.innerHTML=showRows.map((r,i)=>`<tr>
+            <td>${(pagerState.project-1)*PAGE_SIZE + i + 1}</td>
+            <td><span class="priority-badge priority-${r.priority.toLowerCase()}">${r.priority}</span></td>
+            <td>${r.projectMarket||r.market||'—'}</td>
+            <td>${r.cargoType||'—'}</td>
+            <td><span class="hp-name">${r.projectName||'—'}</span></td>
+            <td><span class="badge bdg-${r.sc}">${r.status}</span></td>
+            <td>${r.endClient||'—'}</td>
+            <td>${r.directClient||r.charterer||'—'}</td>
+            <td class="project-period-cell">${r.projectPeriod||r.laycan||'—'}</td>
+            <td><span class="pid-link" title="点击查看详情" onclick="viewCargoDetail(event,'${myCargoSegment}','${r.projectPid||r.pid}')">${r.projectPid||r.pid}</span></td>
+            <td>${r.pic}</td>
+            <td class="project-updated-cell">${r.updatedDisplay||r.updated}</td>
+          </tr>`).join('');
+        }else{
+          tb.innerHTML=showRows.map((r,i)=>`<tr>
+            <td>${(pagerState.project-1)*PAGE_SIZE + i + 1}</td>
+            <td><span class="priority-badge priority-${r.priority.toLowerCase()}">${r.priority}</span></td>
+            <td><span class="pid-link" title="点击查看详情" onclick="viewCargoDetail(event,'${myCargoSegment}','${r.pid}')">${r.pid}</span></td>
+            <td><span class="badge bdg-${r.sc}">${r.status}</span></td>
+            <td>${r.charterer}</td>
+            <td class="hp-val">${r.freight}</td>
+            <td>${r.cargoType}</td>
+            <td>${r.laycan}</td>
+            <td>${r.vessel}</td>
+            <td>${r.pol}</td>
+            <td>${r.pod}</td>
+            <td>${r.pic}</td>
+            <td style="color:#9ab0c6">${r.updated}</td>
+          </tr>`).join('');
+        }
+      }
+      renderPager('projectPager','project',rows.length);
+      if(followDashboardExpanded) renderFollowDashboard();
+    }
+    function viewCargoDetail(e,seg,pid){
+      if(e) e.stopPropagation();
+      showToast(`以只读形式跳转到 ${seg==='spot'?'Spot Cargo':'Project Cargo'} 详情页 · ${pid}`);
+    }
+    followDashboardToggle.addEventListener('click',()=>{
+      followDashboardExpanded=!followDashboardExpanded;
+      followDashboardBody.classList.toggle('collapsed',!followDashboardExpanded);
+      followDashboardToggle.classList.toggle('expanded',followDashboardExpanded);
+      followDashboardToggle.setAttribute('aria-expanded',String(followDashboardExpanded));
+      followDashboardToggle.setAttribute('aria-label',followDashboardExpanded?'收起看板':'展开看板');
+      followDashboardToggle.title=followDashboardExpanded?'收起看板':'展开看板';
+      followDashboardToggleText.textContent=followDashboardExpanded?'收起看板':'展开看板';
+      if(followDashboardExpanded) renderFollowDashboard();
+    });
+    window.addEventListener('resize',()=>{Object.values(followChartRefs).forEach(c=>c&&c.resize&&c.resize());requestAnimationFrame(applyPolBackgroundZoom);});
+    renderMySpotCargo();
+
+    /* ===== 审批待办列表分页（固定 10 条 / 页）===== */
+    const APPROVAL_ROWS=[];
+    function renderApprovalList(){
+      const tb=document.getElementById('approvalBody');
+      const empty=document.getElementById('approvalEmpty');
+      const showRows=pageRows(APPROVAL_ROWS,'approval');
+      if(APPROVAL_ROWS.length===0){
+        if(tb) tb.innerHTML='';
+        if(empty) empty.style.display='flex';
+      }else{
+        if(empty) empty.style.display='none';
+        tb.innerHTML=showRows.map(r=>`<tr>
+          <td>${r.title}</td><td>${r.node}</td><td>${r.creator}</td><td>${r.time}</td><td>${r.source}</td><td>${r.history}</td><td style="text-align:right">${r.action||'查看'}</td>
+        </tr>`).join('');
+      }
+      renderPager('approvalPager','approval',APPROVAL_ROWS.length);
+    }
+    renderApprovalList();
+
+    // ===== 审批待办日期范围选择器 =====
+    const approvalDateWrap=document.getElementById('approvalDateWrap');
+    const approvalDateField=document.getElementById('approvalDateField');
+    const approvalDatePicker=document.getElementById('approvalDatePicker');
+    const approvalDateInput=document.getElementById('approvalDateInput');
+    let pickerMonth=new Date(2026,7,1); // 2026年8月，右侧自动显示9月
+    let rangeStart=new Date(2026,4,7);
+    let rangeEnd=new Date(2026,7,7);
+    let pickingEnd=false;
+
+    function cloneDate(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate())}
+    function sameDay(a,b){return !!a&&!!b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
+    function formatDate(d){
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    function updateApprovalDateInput(){
+      if(rangeStart&&rangeEnd){
+        approvalDateInput.value=`${formatDate(rangeStart)}    →    ${formatDate(rangeEnd)}`;
+      }else if(rangeStart){
+        approvalDateInput.value=`${formatDate(rangeStart)}    →    结束日期`;
+      }
+    }
+    function monthLabel(d){return `${d.getFullYear()}年 ${d.getMonth()+1}月`}
+    function renderMonth(containerId,monthDate){
+      const el=document.getElementById(containerId);
+      const y=monthDate.getFullYear(),m=monthDate.getMonth();
+      const first=new Date(y,m,1);
+      const mondayOffset=(first.getDay()+6)%7;
+      const gridStart=new Date(y,m,1-mondayOffset);
+      const today=new Date(2026,7,10);
+      let s='';
+      for(let i=0;i<42;i++){
+        const d=new Date(gridStart.getFullYear(),gridStart.getMonth(),gridStart.getDate()+i);
+        const muted=d.getMonth()!==m;
+        const selectedStart=rangeStart&&sameDay(d,rangeStart);
+        const selectedEnd=rangeEnd&&sameDay(d,rangeEnd);
+        const inRange=rangeStart&&rangeEnd&&d>rangeStart&&d<rangeEnd;
+        const classes=[
+          'drp-day',
+          muted?'muted':'',
+          inRange?'in-range':'',
+          selectedStart?'range-start':'',
+          selectedEnd?'range-end':'',
+          sameDay(d,today)?'today':''
+        ].filter(Boolean).join(' ');
+        s+=`<button type="button" class="${classes}" data-date="${formatDate(d)}">${d.getDate()}</button>`;
+      }
+      el.innerHTML=s;
+      el.querySelectorAll('.drp-day').forEach(btn=>{
+        btn.addEventListener('click',e=>{
+          e.stopPropagation();
+          chooseApprovalDate(btn.dataset.date);
+        });
+      });
+    }
+    function renderDatePicker(){
+      const right=new Date(pickerMonth.getFullYear(),pickerMonth.getMonth()+1,1);
+      document.getElementById('drpTitleLeft').textContent=monthLabel(pickerMonth);
+      document.getElementById('drpTitleRight').textContent=monthLabel(right);
+      renderMonth('drpDaysLeft',pickerMonth);
+      renderMonth('drpDaysRight',right);
+    }
+    function chooseApprovalDate(iso){
+      const [y,m,d]=iso.split('-').map(Number);
+      const picked=new Date(y,m-1,d);
+      if(!pickingEnd || (rangeStart&&rangeEnd)){
+        rangeStart=cloneDate(picked);
+        rangeEnd=null;
+        pickingEnd=true;
+      }else{
+        if(picked<rangeStart){
+          rangeEnd=rangeStart;
+          rangeStart=cloneDate(picked);
+        }else{
+          rangeEnd=cloneDate(picked);
+        }
+        pickingEnd=false;
+      }
+      updateApprovalDateInput();
+      renderDatePicker();
+      if(rangeStart&&rangeEnd&&!pickingEnd){
+        setTimeout(closeDatePicker,120);
+      }
+    }
+    function openDatePicker(){
+      approvalDatePicker.classList.add('open');
+      approvalDatePicker.setAttribute('aria-hidden','false');
+      if(rangeEnd) pickerMonth=new Date(rangeEnd.getFullYear(),rangeEnd.getMonth(),1);
+      renderDatePicker();
+    }
+    function closeDatePicker(){
+      approvalDatePicker.classList.remove('open');
+      approvalDatePicker.setAttribute('aria-hidden','true');
+    }
+    approvalDateField.addEventListener('click',e=>{
+      e.stopPropagation();
+      approvalDatePicker.classList.contains('open')?closeDatePicker():openDatePicker();
+    });
+    approvalDatePicker.addEventListener('click',e=>e.stopPropagation());
+    approvalDatePicker.querySelectorAll('.drp-nav').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const delta=Number(btn.dataset.delta);
+        pickerMonth=new Date(pickerMonth.getFullYear(),pickerMonth.getMonth()+delta,1);
+        renderDatePicker();
+      });
+    });
+    document.addEventListener('click',e=>{
+      if(!approvalDateWrap.contains(e.target)) closeDatePicker();
+    });
+
+    document.querySelectorAll('.approval-tab').forEach(tab=>{
+      tab.addEventListener('click', ()=>{
+        document.querySelectorAll('.approval-tab').forEach(i=>i.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // 保留原有按钮与链接提示；排除已由上方专门逻辑接管的 PID
+    document.querySelectorAll('.link-btn, .quick-link, .btn').forEach(el=>{
+      el.addEventListener('click', ()=>showToast('原型演示：' + el.textContent.trim()));
+    });
+  </script>
+</body>
+</html>

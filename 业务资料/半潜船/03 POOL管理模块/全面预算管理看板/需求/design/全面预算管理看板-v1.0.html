@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全面预算看板 - 原型</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<style>
+  :root{
+    --primary:#4a78b8;
+    --primary-deep:#3a5f96;
+    --accent-soft:#7ba3d6;
+    --cosco-blue:#00407a;
+    --cosco-red:#d8232a;
+    --gold:#c9954e;
+    --green:#5a9e6f;
+    --red:#cf6f66;
+    --bg:#f4f6f8;
+    --card:#ffffff;
+    --text:#3c4858;
+    --text-muted:#7a8794;
+    --text-light:#9aa6b2;
+    --border:#e8ebef;
+    --border-soft:#eef1f4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--text);font-size:13px;
+  }
+  /* ===================== TOP BAR ===================== */
+  .topbar{height:56px;background:#fff;display:flex;align-items:center;border-bottom:1px solid var(--border);padding:0 18px;position:sticky;top:0;z-index:50;}
+  .tb-menu{display:flex;align-items:center;gap:7px;color:#4a5663;font-size:14px;cursor:pointer;padding-right:14px;}
+  .tb-menu svg{width:18px;height:18px;}
+  .cosco-logo{display:flex;align-items:center;gap:8px;padding:0 16px 0 4px;}
+  .cosco-mark{width:33px;height:33px;}
+  .cosco-text{line-height:1;}
+  .cosco-text .c1{font-weight:800;font-size:16px;color:var(--cosco-blue);letter-spacing:.5px;}
+  .cosco-text .c2{font-size:8px;font-weight:700;color:var(--cosco-blue);letter-spacing:2.2px;}
+  .tb-home{color:#4a5663;font-size:14px;padding:0 16px;cursor:pointer;}
+  .tb-tabs{display:flex;align-items:flex-end;height:100%;}
+  .tb-tab{display:flex;align-items:center;gap:8px;height:34px;margin-top:14px;padding:0 16px;background:#eef4fb;color:var(--primary);border:1px solid #dde8f4;border-bottom:none;border-radius:6px 6px 0 0;font-size:13px;cursor:pointer;}
+  .tb-tab .x{opacity:.5;font-size:13px;}
+  .tb-spacer{flex:1;}
+  .tb-right{display:flex;align-items:center;gap:6px;}
+  .tb-combo{display:flex;align-items:center;gap:4px;color:#4a5663;font-size:13px;padding:0 8px;cursor:pointer;}
+  .tb-search{display:flex;align-items:center;gap:8px;background:#f4f6f8;border:1px solid #e7eaee;border-radius:18px;height:34px;width:230px;padding:0 14px;color:#9aa6b2;}
+  .tb-search input{border:none;background:transparent;outline:none;flex:1;font-size:13px;color:#4a5663;}
+  .tb-icon{position:relative;width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#5a6775;cursor:pointer;transition:background .2s;}
+  .tb-icon:hover{background:#f2f5f8;}
+  .tb-icon svg{width:19px;height:19px;}
+  .tb-badge{position:absolute;top:5px;right:6px;min-width:15px;height:15px;background:#e06b63;color:#fff;border-radius:8px;font-size:10px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+  .tb-user{display:flex;align-items:center;gap:8px;padding:0 6px 0 10px;cursor:pointer;}
+  .tb-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#6f9fd8,#4a78b8);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;}
+  .tb-user .name{font-size:13px;color:#3c4858;}
+  /* ===================== PAGE HEADER ===================== */
+  .page-head{background:#fff;border-bottom:1px solid var(--border);padding:13px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .page-title{font-size:17px;font-weight:600;color:#2f3b48;}
+  .page-upd{color:var(--text-light);font-size:12px;display:flex;align-items:center;gap:5px;margin-left:12px;}
+  .ph-spacer{flex:1;}
+  .btn{height:32px;padding:0 14px;border-radius:6px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--primary);transition:all .2s;}
+  .btn-outline{background:#fff;color:var(--primary);}
+  .btn-outline:hover{background:#eef4fb;}
+  .btn svg{width:14px;height:14px;}
+  /* ===================== BODY ===================== */
+  .wrap{padding:18px 24px 40px;}
+  .block{margin-bottom:18px;}
+  .sec-label{display:flex;align-items:center;gap:9px;margin:6px 2px 11px;}
+  .sec-label .bar{width:3px;height:14px;background:var(--accent-soft);border-radius:2px;}
+  .sec-label .txt{font-size:14px;font-weight:500;color:#56616d;}
+  .grid{display:grid;gap:14px;}
+  .g-3{grid-template-columns:1fr 1.3fr 1.1fr;}
+  .g-2{grid-template-columns:1fr 1.25fr;}
+  @media(max-width:1100px){.g-3,.g-2{grid-template-columns:1fr;}}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:16px 16px 14px;}
+  .card-fill{display:flex;flex-direction:column;}
+  .card-fill .fill{flex:1;min-height:230px;}
+  .card-title{font-size:13.5px;font-weight:600;color:#404b58;display:flex;align-items:center;gap:8px;margin-bottom:3px;}
+  .card-hint{font-size:11px;font-weight:400;color:#a6b0bb;margin-bottom:6px;}
+  .seg{display:inline-flex;background:#f1f4f7;border-radius:7px;padding:3px;gap:2px;}
+  .seg button{border:none;background:transparent;padding:5px 11px;border-radius:5px;font-size:12px;color:#6b7884;cursor:pointer;transition:all .15s;}
+  .seg button.active{background:#fff;color:var(--primary);box-shadow:0 1px 2px rgba(60,72,88,.10);font-weight:600;}
+  .mini-sel{height:28px;border:1px solid var(--border);border-radius:6px;padding:0 24px 0 9px;background:#fff;color:#3c4858;font-size:12px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239aa6b2' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 7px center;}
+  .chart{width:100%;}
+  .kpi-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+  .kpi{flex:1;min-width:88px;background:#f7f9fb;border-radius:7px;padding:9px 12px;}
+  .kpi .k{font-size:11px;color:#94a0ac;}
+  .kpi .v{font-size:17px;font-weight:600;color:#3c4858;margin-top:3px;}
+  .kpi .v.green{color:var(--green);} .kpi .v.red{color:var(--red);} .kpi .v.gold{color:var(--gold);}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  thead th{background:#f8fafb;color:#8995a1;font-weight:500;text-align:left;padding:9px 10px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:8px 10px;border-bottom:1px solid var(--border-soft);color:#48535f;}
+  tbody tr:hover{background:#f7fafc;}
+  tr.muted td{color:#aab4be;}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+  .dot.red{background:var(--red);} .dot.amber{background:var(--gold);}
+  .num-red{color:#bb5b52;font-weight:500;}
+  .num-mut{color:#aab4be;}
+  .pending{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;color:#a87a35;background:#f8f1e3;border:1px solid #ecdcc0;border-radius:4px;padding:1px 7px;font-weight:500;}
+  .flag{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:11px;font-size:11px;font-weight:500;}
+  .flag.green{background:#eef6f0;color:#4f8c63;}
+  .rate-input{width:74px;height:26px;border:1px solid #dfe4ea;border-radius:5px;padding:0 7px;font-size:12px;color:#3c4858;background:#fcfdfe;}
+  .rate-input:focus{outline:none;border-color:var(--accent-soft);background:#fff;}
+  .link-back{font-size:12px;color:var(--primary);cursor:pointer;}
+  .link-back:hover{text-decoration:underline;}
+  .legend{display:flex;gap:14px;font-size:11px;color:#94a0ac;margin-top:8px;}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:middle;}
+</style>
+</head>
+<body>
+
+<!-- ===================== 顶栏 ===================== -->
+<div class="topbar">
+  <div class="tb-menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg><span>菜单</span></div>
+  <div class="cosco-logo">
+    <svg class="cosco-mark" viewBox="0 0 64 64">
+      <path d="M32 4 C20 14 14 26 14 38 a18 18 0 0 0 36 0 C50 26 44 14 32 4 Z" fill="#d8232a"/>
+      <path d="M32 14 C25 21 21 29 21 38 a11 11 0 0 0 22 0 C43 29 39 21 32 14 Z" fill="#fff"/>
+      <path d="M32 22 C28 27 26 32 26 38 a6 6 0 0 0 12 0 C38 32 36 27 32 22 Z" fill="#d8232a"/>
+    </svg>
+    <div class="cosco-text"><div class="c1">COSCO</div><div class="c2">SHIPPING</div></div>
+  </div>
+  <div class="tb-home">主页</div>
+  <div class="tb-tabs"><div class="tb-tab">全面预算看板 <span class="x">✕</span></div></div>
+  <div class="tb-spacer"></div>
+  <div class="tb-right">
+    <div class="tb-combo">综合 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+    <div class="tb-search">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+      <input placeholder="搜索应用、菜单等">
+    </div>
+    <div class="tb-icon" title="待办"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+    <div class="tb-icon" title="通知"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="tb-badge">1</span></div>
+    <div class="tb-icon" title="应用"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+    <div class="tb-user"><div class="tb-avatar">吴</div><span class="name">吴丽萍2</span><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="#9aa6b2" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+  </div>
+</div>
+
+<!-- ===================== 页面标题栏 ===================== -->
+<div class="page-head">
+  <div class="page-title">全面预算看板</div>
+  <div class="page-upd"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>数据更新于 2026-06-24 08:00</div>
+  <div class="ph-spacer"></div>
+  <button class="btn btn-outline">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>导出报告</button>
+</div>
+
+<div class="wrap">
+
+  <!-- ============ 滚动预算 ============ -->
+  <div class="block">
+    <div class="sec-label"><span class="bar"></span><span class="txt">滚动预算</span></div>
+    <div class="grid g-3">
+      <!-- C1 全口径预算执行率 -->
+      <div class="card">
+        <div class="card-title">全口径预算执行率
+          <span class="seg" style="margin-left:auto">
+            <button class="active" onclick="switchExec(this,'jv')">合资公司</button>
+            <button onclick="switchExec(this,'semi')">半潜船经营部</button>
+            <button onclick="switchExec(this,'ship')">单船</button>
+          </span>
+        </div>
+        <div class="card-hint">执行率 = 实际效益表现 ÷ 预算总额（本年度）；单船口径按船名排行</div>
+        <div id="gaugeExec" class="chart" style="height:178px"></div>
+        <div id="barExecShips" class="chart" style="height:178px;display:none"></div>
+        <div id="execScope" style="font-size:11px;color:#94a0ac;margin-top:8px">口径：合资公司</div>
+        <div class="kpi-row">
+          <div class="kpi"><div class="k">预算总额</div><div class="v" id="kpiBudget">¥ 8.00 亿</div></div>
+          <div class="kpi"><div class="k">实际效益</div><div class="v green" id="kpiActual">¥ 6.24 亿</div></div>
+        </div>
+      </div>
+      <!-- C2 预测利润 vs 实时利润 -->
+      <div class="card card-fill">
+        <div class="card-title">预测利润 vs 实时利润 <span class="pending">取数来源 / 窗口口径待确认</span>
+          <span style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <select class="mini-sel" id="pVesselSel" onchange="onProfitVessel()"></select>
+            <select class="mini-sel" id="pVoyageSel" onchange="renderProfit()"></select>
+          </span>
+        </div>
+        <div class="card-hint">T-当月 ~ T+2 滚动窗口（暂按回看2月+未来2月）；可按船名/航次筛选</div>
+        <div id="profitMain" class="fill"><div id="lineProfit" style="width:100%;height:100%"></div></div>
+      </div>
+      <!-- C3 TOP3 偏差航次预警（点击航次→费项拆分） -->
+      <div class="card">
+        <div class="card-title">TOP 3 偏差航次预警 <span class="pending">偏差口径待确认</span></div>
+        <div class="card-hint">按预测-实际偏差降序，金额单位 万元；点击航次看费项拆分</div>
+        <div id="devMain">
+          <table style="margin-top:4px">
+            <thead><tr><th>船名</th><th>航次</th><th>预测利润</th><th>实际利润</th><th>偏差</th><th>偏差率</th></tr></thead>
+            <tbody id="devBody"></tbody>
+          </table>
+        </div>
+        <div id="devDetail" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin:2px 0 7px">
+            <span id="devDetailTitle" style="font-size:12.5px;color:#56616d;font-weight:600"></span>
+            <span class="link-back" onclick="backDev()">← 返回</span>
+          </div>
+          <table><thead><tr><th>费项</th><th>预测</th><th>实际</th><th>偏差</th></tr></thead><tbody id="devDetailBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 航次效益 ============ -->
+  <div class="block">
+    <div class="sec-label"><span class="bar"></span><span class="txt">航次效益</span></div>
+    <div class="grid g-2">
+      <!-- D1 单航次期租水平对比 -->
+      <div class="card">
+        <div class="card-title">单航次期租水平对比 <span class="pending">预测值/POC 口径待确认</span> <span class="pending">是否仅展示当前航次待确认</span>
+          <span style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <select class="mini-sel" id="vesselSel" onchange="onVesselChange()"></select>
+            <select class="mini-sel" id="voyageSel" onchange="renderCharter()"></select>
+          </span>
+        </div>
+        <div class="card-hint">预测值（budget analysis 填报） vs 实际 POC，单位 USD/天</div>
+        <div id="barCharter" class="chart" style="height:250px"></div>
+        <div class="legend"><span><i style="background:#4a78b8"></i>预测期租</span><span><i style="background:#c9954e"></i>POC 实际</span></div>
+      </div>
+      <!-- D2 风险航次列表 -->
+      <div class="card">
+        <div class="card-title">风险航次列表 <span class="pending">日租金默认取自 budget analysis，可手动调整</span></div>
+        <div class="card-hint">期租水平低于该船日租金即列入并标红；低于幅度 = 日租金 − 期租水平（日租金列可直接编辑）</div>
+        <table>
+          <thead><tr><th>船名</th><th>航次</th><th>POL</th><th>POD</th><th>期租水平</th><th>日租金</th><th>低于幅度</th></tr></thead>
+          <tbody id="riskBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 成本超支预警 ============ -->
+  <div class="block">
+    <div class="sec-label"><span class="bar"></span><span class="txt">成本超支预警</span></div>
+    <div class="grid g-2">
+      <!-- E1 使费备用金占用率 -->
+      <div class="card">
+        <div class="card-title">使费备用金占用率 <span class="flag green" style="margin-left:auto">数据源：使费平台</span></div>
+        <div class="card-hint">占用率 = 实际预付 ÷ 预估使费（取不到回退 SAP）</div>
+        <div id="gaugeDisb" class="chart" style="height:198px"></div>
+        <div class="kpi-row">
+          <div class="kpi"><div class="k">实际预付</div><div class="v">¥ 4,120万</div></div>
+          <div class="kpi"><div class="k">预估使费</div><div class="v gold">¥ 5,380万</div></div>
+          <div class="kpi"><div class="k">占用率</div><div class="v">76.6%</div></div>
+        </div>
+      </div>
+      <!-- E2 超期账单统计 -->
+      <div class="card">
+        <div class="card-title">超期账单统计
+          <span style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <span class="seg">
+              <button class="active" onclick="switchBill(this,'agent')">按代理</button>
+              <button onclick="switchBill(this,'vessel')">按船名</button>
+            </span>
+            <select class="mini-sel" id="billSelect" onchange="onBillSelect(this.value)"></select>
+          </span>
+        </div>
+        <div class="card-hint">账龄 &gt; 180 天 <span class="pending">账龄起算点待确认</span></div>
+        <div id="barBill" class="chart" style="height:208px"></div>
+        <div id="billDetail" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin:2px 0 7px">
+            <span id="billDetailTitle" style="font-size:12.5px;color:#56616d;font-weight:600"></span>
+            <span class="link-back" onclick="backBill()">← 返回排行</span>
+          </div>
+          <table>
+            <thead><tr id="billDetailHead"></tr></thead>
+            <tbody id="billDetailBody"></tbody>
+          </table>
+        </div>
+        <div class="kpi-row">
+          <div class="kpi"><div class="k">超期账单数</div><div class="v red" id="billCount">— 笔</div></div>
+          <div class="kpi"><div class="k">超期总金额</div><div class="v red" id="billAmount">¥ —万</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;color:#b4bdc6;font-size:11px;margin-top:6px">
+    原型仅用于演示 · 数据为模拟值 · 浅黄标签为取数来源/口径待业务确认项 · 基于《PRD-全面预算看板》生成
+  </div>
+</div>
+
+<script>
+const C={primary:'#4a78b8',accent:'#7ba3d6',gold:'#c9954e',green:'#5a9e6f',red:'#cf6f66',grid:'#eef1f4',axis:'#9aa6b2',track:'#eef1f4'};
+function mk(id){const c=echarts.init(document.getElementById(id));window.addEventListener('resize',()=>c.resize());return c;}
+function fmt(n){return n.toLocaleString();}
+
+/* ---------- C1 预算执行率：仪表（合资/半潜）+ 单船排行条形；KPI 随口径联动 ---------- */
+const execDims={
+  jv:{label:'合资公司',budget:8.0,actual:6.24},
+  semi:{label:'半潜船经营部',budget:3.2,actual:2.05}
+};
+const shipExecData=[
+  {v:'康盛口',budget:1.20,actual:1.092},
+  {v:'大连号',budget:0.90,actual:0.747},
+  {v:'木浦轮',budget:0.80,actual:0.576},
+  {v:'厦门号',budget:0.70,actual:0.462},
+  {v:'台北星',budget:0.60,actual:0.348}
+];
+function yi(n){return '¥ '+n.toFixed(2)+' 亿';}
+function setExecKpi(budget,actual,scope){
+  document.getElementById('kpiBudget').textContent=yi(budget);
+  document.getElementById('kpiActual').textContent=yi(actual);
+  document.getElementById('execScope').textContent='口径：'+scope;
+}
+let gExec=mk('gaugeExec');
+let bExecShips=null;
+function execOpt(v){return{series:[{type:'gauge',startAngle:200,endAngle:-20,min:0,max:1,radius:'100%',center:['50%','62%'],
+  progress:{show:true,width:13,roundCap:true,itemStyle:{color:v<0.7?C.gold:C.primary}},
+  axisLine:{lineStyle:{width:13,color:[[1,C.track]]}},axisTick:{show:false},splitLine:{show:false},axisLabel:{show:false},pointer:{show:false},anchor:{show:false},
+  title:{show:true,offsetCenter:[0,'-16%'],color:'#94a0ac',fontSize:12,fontWeight:'normal'},
+  detail:{valueAnimation:true,formatter:p=>(p*100).toFixed(0)+'%',color:'#3c4858',fontSize:30,fontWeight:'bold',offsetCenter:[0,'12%']},data:[{value:v,name:'执行率'}]}]};}
+gExec.setOption(execOpt(0.78));
+function renderExecShips(){
+  if(!bExecShips)bExecShips=mk('barExecShips');
+  const d=shipExecData.map(s=>[s.v,s.actual/s.budget]).sort((a,b)=>a[1]-b[1]); // 升序→最高在上
+  bExecShips.setOption({
+    grid:{left:62,right:46,top:8,bottom:8},
+    tooltip:{trigger:'axis',axisPointer:{type:'shadow'},formatter:p=>p[0].name+'：'+(p[0].value*100).toFixed(0)+'%（点击看该船明细）'},
+    xAxis:{type:'value',max:1,axisLabel:{show:false},splitLine:{show:false},axisLine:{show:false}},
+    yAxis:{type:'category',data:d.map(x=>x[0]),axisLine:{show:false},axisTick:{show:false},axisLabel:{color:'#6b7884',fontSize:11}},
+    series:[{type:'bar',data:d.map(x=>x[1]),barWidth:13,itemStyle:{borderRadius:[0,6,6,0],color:p=>p.value<0.65?C.red:(p.value<0.8?C.gold:C.primary)},
+      label:{show:true,position:'right',formatter:p=>(p.value*100).toFixed(0)+'%',color:'#6b7884',fontSize:11,fontWeight:500}}]});
+  bExecShips.resize();
+  bExecShips.off('click');
+  bExecShips.on('click',p=>{const s=shipExecData.find(x=>x.v===p.name);if(s)setExecKpi(s.budget,s.actual,'单船·'+s.v);});
+}
+function switchExec(btn,kind){
+  [...btn.parentNode.children].forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const g=document.getElementById('gaugeExec'),b=document.getElementById('barExecShips');
+  if(kind==='ship'){
+    g.style.display='none';b.style.display='block';renderExecShips();
+    const tb=shipExecData.reduce((s,x)=>s+x.budget,0),ta=shipExecData.reduce((s,x)=>s+x.actual,0);
+    setExecKpi(tb,ta,'单船·合计（'+shipExecData.length+' 艘，点击条形看单船）');
+  }else{
+    const dim=execDims[kind];
+    g.style.display='block';b.style.display='none';
+    gExec.setOption(execOpt(dim.actual/dim.budget));gExec.resize();
+    setExecKpi(dim.budget,dim.actual,dim.label);
+  }
+}
+
+/* ---------- C2 预测利润 vs 实时利润（船名/航次筛选 + 点击月份→偏差归因） ---------- */
+const profitMonths=['T-2','T-1','T-当月','T+1','T+2'];
+const profitBase={pred:[820,910,1050,1180,1260],act:[760,880,930,null,null]};
+const profitVessels={'康盛口':0.30,'大连号':0.22,'木浦轮':0.18,'厦门号':0.18,'台北星':0.12};
+const profitVoyages={2606:'康盛口',2620:'大连号',2598:'木浦轮',2631:'厦门号',2611:'台北星'};
+let gProfit=mk('lineProfit');
+function profitScale(){
+  const ves=document.getElementById('pVesselSel').value, voy=document.getElementById('pVoyageSel').value;
+  if(voy!=='全部')return profitVessels[profitVoyages[voy]]||1;
+  if(ves!=='全部')return profitVessels[ves]||1;
+  return 1;
+}
+function initProfitSelectors(){
+  document.getElementById('pVesselSel').innerHTML='<option value="全部">全部船名</option>'+Object.keys(profitVessels).map(v=>`<option>${v}</option>`).join('');
+  onProfitVessel();
+}
+function onProfitVessel(){
+  const ves=document.getElementById('pVesselSel').value;
+  const voys=Object.keys(profitVoyages).filter(no=>ves==='全部'||profitVoyages[no]===ves);
+  document.getElementById('pVoyageSel').innerHTML='<option value="全部">全部航次</option>'+voys.map(n=>`<option>${n}</option>`).join('');
+  renderProfit();
+}
+function renderProfit(){
+  const s=profitScale();
+  gProfit.setOption({
+    tooltip:{trigger:'axis'},grid:{left:50,right:18,top:34,bottom:26},
+    legend:{data:['预测利润','实时利润'],right:0,top:0,textStyle:{fontSize:11,color:'#8995a1'},icon:'roundRect',itemWidth:10,itemHeight:6},
+    xAxis:{type:'category',data:profitMonths,axisLine:{lineStyle:{color:C.grid}},axisTick:{show:false},axisLabel:{color:C.axis}},
+    yAxis:{type:'value',name:'万元',nameTextStyle:{color:C.axis},splitLine:{lineStyle:{color:C.grid}},axisLabel:{color:C.axis}},
+    series:[
+      {name:'预测利润',type:'line',smooth:true,data:profitBase.pred.map(x=>Math.round(x*s)),itemStyle:{color:C.primary},lineStyle:{width:2},areaStyle:{color:'rgba(74,120,184,.08)'},symbol:'circle',symbolSize:6},
+      {name:'实时利润',type:'line',smooth:true,data:profitBase.act.map(x=>x==null?null:Math.round(x*s)),itemStyle:{color:C.gold},lineStyle:{width:2},symbol:'circle',symbolSize:6}
+    ]},true);
+  gProfit.resize();
+}
+
+/* ---------- C3 TOP3 偏差航次（点击航次→费项拆分，费项由业务定义） ---------- */
+const devVoyages=[
+  {v:'康盛口',no:2606,pred:6880,act:6020,sev:'red',bd:[
+    {item:'收入',pred:9200,act:9050},{item:'燃油费',pred:-820,act:-1010},{item:'港口费',pred:-260,act:-410},{item:'货物费',pred:-900,act:-960},{item:'欧盟碳税',pred:-180,act:-230},{item:'佣金',pred:-100,act:-110},{item:'其他（劳务费）',pred:-60,act:-310}]},
+  {v:'木浦轮',no:2598,pred:3600,act:3060,sev:'red',bd:[
+    {item:'收入',pred:5200,act:5150},{item:'燃油费',pred:-560,act:-720},{item:'港口费',pred:-200,act:-300},{item:'货物费',pred:-640,act:-700},{item:'欧盟碳税',pred:-120,act:-160},{item:'佣金',pred:-60,act:-70},{item:'其他（劳务费）',pred:-20,act:-140}]},
+  {v:'台北星',no:2611,pred:1550,act:1240,sev:'amber',bd:[
+    {item:'收入',pred:2600,act:2560},{item:'燃油费',pred:-360,act:-470},{item:'港口费',pred:-100,act:-140},{item:'货物费',pred:-420,act:-460},{item:'欧盟碳税',pred:-90,act:-120},{item:'佣金',pred:-50,act:-60},{item:'其他（劳务费）',pred:-30,act:-70}]}
+];
+function diffCell(d){return `<td class="${d<0?'num-red':''}">${d>0?'+':''}${fmt(d)}</td>`;}
+function renderDevMain(){
+  document.getElementById('devBody').innerHTML=devVoyages.map((d,i)=>{
+    const diff=d.act-d.pred,rate=(diff/d.pred*100).toFixed(1);
+    return `<tr style="cursor:pointer" onclick="showDev(${i})"><td><span class="dot ${d.sev}"></span> ${d.v}</td><td>${d.no}</td><td>${fmt(d.pred)}</td><td>${fmt(d.act)}</td><td class="num-red">${fmt(diff)}</td><td class="num-red">${rate}%</td></tr>`;
+  }).join('');
+}
+function showDev(i){
+  document.getElementById('devMain').style.display='none';
+  document.getElementById('devDetail').style.display='block';
+  const d=devVoyages[i];
+  document.getElementById('devDetailTitle').textContent=d.v+'-'+d.no+' 费项拆分（万元）';
+  document.getElementById('devDetailBody').innerHTML=d.bd.map(x=>`<tr><td>${x.item}</td><td>${fmt(x.pred)}</td><td>${fmt(x.act)}</td>${diffCell(x.act-x.pred)}</tr>`).join('')
+    +`<tr style="font-weight:600"><td>净利润</td><td>${fmt(d.pred)}</td><td>${fmt(d.act)}</td>${diffCell(d.act-d.pred)}</tr>`;
+}
+function backDev(){document.getElementById('devMain').style.display='block';document.getElementById('devDetail').style.display='none';}
+
+/* ---------- D1 单航次期租水平对比（船名+航次选择器） ---------- */
+let bCharter=mk('barCharter');
+const voyages=[
+  {v:'康盛口',no:2606,pred:13500,poc:12800},
+  {v:'木浦轮',no:2598,pred:9800,poc:8900},
+  {v:'台北星',no:2611,pred:12200,poc:11500},
+  {v:'大连号',no:2620,pred:8600,poc:7900},
+  {v:'厦门号',no:2631,pred:15000,poc:14600}
+];
+function initCharterSelectors(){
+  const vs=document.getElementById('vesselSel');
+  vs.innerHTML='<option value="全部">全部船名</option>'+[...new Set(voyages.map(v=>v.v))].map(v=>`<option value="${v}">${v}</option>`).join('');
+  onVesselChange();
+}
+function onVesselChange(){
+  const vesSel=document.getElementById('vesselSel').value;
+  const list=vesSel==='全部'?voyages:voyages.filter(v=>v.v===vesSel);
+  const vo=document.getElementById('voyageSel');
+  vo.innerHTML='<option value="全部">全部航次</option>'+list.map(v=>`<option value="${v.no}">${v.no}</option>`).join('');
+  renderCharter();
+}
+function renderCharter(){
+  const vesSel=document.getElementById('vesselSel').value;
+  const voySel=document.getElementById('voyageSel').value;
+  let list=voyages.slice();
+  if(vesSel!=='全部')list=list.filter(v=>v.v===vesSel);
+  if(voySel!=='全部')list=list.filter(v=>String(v.no)===voySel);
+  bCharter.setOption({
+    tooltip:{trigger:'axis',axisPointer:{type:'shadow'},formatter:ps=>{const i=ps[0].dataIndex;return list[i].v+'-'+list[i].no+'<br/>预测期租：'+fmt(list[i].pred)+'<br/>POC实际：'+fmt(list[i].poc);}},
+    legend:{show:false},grid:{left:50,right:20,top:18,bottom:28},
+    xAxis:{type:'category',data:list.map(v=>v.v+'-'+v.no),axisLine:{lineStyle:{color:C.grid}},axisTick:{show:false},axisLabel:{color:C.axis,fontSize:10,interval:0}},
+    yAxis:{type:'value',name:'USD/天',nameTextStyle:{color:C.axis},splitLine:{lineStyle:{color:C.grid}},axisLabel:{color:C.axis}},
+    series:[
+      {name:'预测期租',type:'bar',data:list.map(v=>v.pred),barWidth:list.length<=2?22:13,itemStyle:{color:C.primary,borderRadius:[3,3,0,0]}},
+      {name:'POC实际',type:'bar',data:list.map(v=>v.poc),barWidth:list.length<=2?22:13,itemStyle:{color:C.gold,borderRadius:[3,3,0,0]}}
+    ]},true);
+}
+
+/* ---------- D2 风险航次列表（日租金按行可编辑） ---------- */
+const riskVoyages=[
+  {v:'木浦轮',no:2598,pol:'MOKPO',pod:'TAIPEI',rate:8900,day:11000},
+  {v:'大连号',no:2620,pol:'DALIAN',pod:'SINGAPORE',rate:7900,day:9500},
+  {v:'厦门号',no:2631,pol:'XIAMEN',pod:'BUSAN',rate:10200,day:11000},
+  {v:'台北星',no:2611,pol:'KAOHSIUNG',pod:'OSAKA',rate:11500,day:12000}
+];
+function renderRisk(){
+  document.getElementById('riskBody').innerHTML=riskVoyages.map((v,i)=>{
+    const gap=v.day-v.rate, below=gap>0;
+    const gapCell=below?`<span class="num-red">-${fmt(gap)}</span>`:`<span class="num-mut">—</span>`;
+    return `<tr class="${below?'':'muted'}">
+      <td>${below?'<span class="dot red"></span> ':''}${v.v}</td>
+      <td>${v.no}</td><td>${v.pol}</td><td>${v.pod}</td>
+      <td>${fmt(v.rate)}</td>
+      <td><input class="rate-input" type="number" value="${v.day}" onchange="onDayRate(${i},this.value)"></td>
+      <td>${gapCell}</td></tr>`;
+  }).join('');
+}
+function onDayRate(i,val){riskVoyages[i].day=+val||0;renderRisk();}
+
+/* ---------- E1 使费备用金占用率 ---------- */
+mk('gaugeDisb').setOption({series:[{type:'gauge',min:0,max:1,radius:'95%',center:['50%','58%'],
+  progress:{show:true,width:15,roundCap:true,itemStyle:{color:'#d49a78'}},
+  axisLine:{lineStyle:{width:15,color:[[0.6,'#7fb592'],[0.85,'#d6ad6e'],[1,'#d68f87']]}},
+  axisTick:{show:false},splitLine:{length:11,lineStyle:{color:'#fff',width:2}},axisLabel:{distance:-2,color:'#aab4be',fontSize:9,formatter:v=>v*100},
+  pointer:{width:4,length:'60%',itemStyle:{color:'#6b7884'}},anchor:{show:true,size:9,itemStyle:{color:'#6b7884'}},
+  detail:{valueAnimation:true,formatter:p=>(p*100).toFixed(1)+'%',color:'#3c4858',fontSize:25,fontWeight:'bold',offsetCenter:[0,'40%']},data:[{value:0.766}]}]});
+
+/* ---------- E2 超期账单统计（选择器 + 下钻明细） ---------- */
+let bBill=mk('barBill');
+let billMode='agent';
+const bills=[
+  {billNo:'DA-20251108',agent:'Wilhelmsen',vessel:'康盛口',no:2606,amount:320,age:215,due:'2025-11-20'},
+  {billNo:'DA-20251203',agent:'Wilhelmsen',vessel:'木浦轮',no:2598,amount:500,age:198,due:'2025-12-05'},
+  {billNo:'DA-20251015',agent:'GAC',vessel:'台北星',no:2611,amount:410,age:240,due:'2025-10-18'},
+  {billNo:'DA-20251122',agent:'GAC',vessel:'大连号',no:2620,amount:230,age:201,due:'2025-11-25'},
+  {billNo:'DA-20251030',agent:'Inchcape',vessel:'康盛口',no:2606,amount:300,age:225,due:'2025-11-02'},
+  {billNo:'DA-20251205',agent:'Inchcape',vessel:'厦门号',no:2631,amount:210,age:190,due:'2025-12-08'},
+  {billNo:'DA-20251018',agent:'Sinoagent',vessel:'木浦轮',no:2598,amount:470,age:235,due:'2025-10-20'},
+  {billNo:'DA-20251128',agent:'Penavico',vessel:'台北星',no:2611,amount:407,age:200,due:'2025-12-01'}
+];
+function billAgg(mode){const m={};bills.forEach(b=>{const k=mode==='agent'?b.agent:b.vessel;m[k]=(m[k]||0)+b.amount;});return Object.entries(m).sort((a,b)=>b[1]-a[1]);}
+function fillBillSelect(){
+  const agg=billAgg(billMode);
+  document.getElementById('billSelect').innerHTML='<option value="全部">'+(billMode==='agent'?'全部代理':'全部船名')+'</option>'+agg.map(x=>`<option value="${x[0]}">${x[0]}</option>`).join('');
+}
+function updateBillKpi(rows){
+  document.getElementById('billCount').textContent=rows.length+' 笔';
+  document.getElementById('billAmount').textContent='¥ '+rows.reduce((s,b)=>s+b.amount,0).toLocaleString()+'万';
+}
+function renderBillBar(){
+  document.getElementById('barBill').style.display='block';
+  document.getElementById('billDetail').style.display='none';
+  updateBillKpi(bills);
+  const d=billAgg(billMode);
+  bBill.setOption({
+    tooltip:{trigger:'axis',axisPointer:{type:'shadow'},formatter:p=>p[0].name+'：¥'+p[0].value+'万'},
+    grid:{left:78,right:40,top:12,bottom:20},
+    xAxis:{type:'value',axisLabel:{show:false},splitLine:{show:false},axisLine:{show:false}},
+    yAxis:{type:'category',data:d.map(x=>x[0]).reverse(),axisLine:{show:false},axisTick:{show:false},axisLabel:{color:'#6b7884',fontSize:11}},
+    series:[{type:'bar',data:d.map(x=>x[1]).reverse(),barWidth:14,itemStyle:{borderRadius:[0,6,6,0],color:'#cf8079'},
+      label:{show:true,position:'right',formatter:'¥{c}万',color:'#bb5b52',fontSize:11,fontWeight:500}}]},true);
+  bBill.resize();
+}
+function renderBillDetail(entity){
+  document.getElementById('barBill').style.display='none';
+  document.getElementById('billDetail').style.display='block';
+  const isAgent=billMode==='agent';
+  const rows=bills.filter(b=>isAgent?b.agent===entity:b.vessel===entity);
+  const total=rows.reduce((s,b)=>s+b.amount,0);
+  updateBillKpi(rows);
+  document.getElementById('billDetailTitle').textContent=(isAgent?'代理：':'船名：')+entity+'　共 '+rows.length+' 笔 / ¥'+total+'万';
+  document.getElementById('billDetailHead').innerHTML=`<th>账单号</th><th>航次</th><th>${isAgent?'船名':'代理'}</th><th>金额(万)</th><th>账龄(天)</th><th>到期日</th>`;
+  document.getElementById('billDetailBody').innerHTML=rows.sort((a,b)=>b.age-a.age).map(b=>
+    `<tr><td>${b.billNo}</td><td>${b.no}</td><td>${isAgent?b.vessel:b.agent}</td><td class="num-red">${b.amount}</td><td class="num-red">${b.age}</td><td>${b.due}</td></tr>`).join('');
+}
+function switchBill(btn,mode){[...btn.parentNode.children].forEach(b=>b.classList.remove('active'));btn.classList.add('active');billMode=mode;fillBillSelect();renderBillBar();}
+function onBillSelect(val){if(val==='全部')renderBillBar();else renderBillDetail(val);}
+function backBill(){document.getElementById('billSelect').value='全部';renderBillBar();}
+bBill.on('click',p=>{document.getElementById('billSelect').value=p.name;renderBillDetail(p.name);});
+
+/* ---------- init ---------- */
+renderDevMain();
+initProfitSelectors();
+initCharterSelectors();
+renderRisk();
+fillBillSelect();
+renderBillBar();
+</script>
+</body>
+</html>
